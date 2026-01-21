@@ -160,9 +160,11 @@ function initAdmin() {
             const image = document.getElementById('b-image').value;
             const link = document.getElementById('b-link').value;
             const btnText = document.getElementById('b-btn').value;
+            const color = document.getElementById('b-color').value;
+            const btnColor = document.getElementById('b-btn-color').value;
 
             db.collection("banners").add({
-                title, subtitle, image_url: image, link, btn_text: btnText,
+                title, subtitle, image_url: image, link, btn_text: btnText, color, btn_color: btnColor,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 alert("Banner added!");
@@ -1103,32 +1105,39 @@ function initCarousel() {
         snap.forEach(doc => {
             const data = doc.data();
             const colors = ['#39ff14', '#00f3ff', '#ff00ff'];
-            const color = colors[index % colors.length];
+            const color = data.color || colors[index % colors.length];
+            const btnColor = data.btn_color || color;
 
-            // Slide
+            // Strict content checks
+            const titleText = data.title ? data.title.trim() : "";
+            const subtitleText = data.subtitle ? data.subtitle.trim() : "";
+            const btnText = data.btn_text ? data.btn_text.trim() : "";
+
+            const hasContent = titleText.length > 0 || subtitleText.length > 0 || btnText.length > 0;
+
+            // Content HTML Generation
             let contentHTML = '';
-            if (data.title) { // Only render content overlay if there is a title
+            if (hasContent) {
                 contentHTML = `
                     <div class="carousel-content relative h-full flex flex-col justify-center px-12 max-w-2xl">
-                        <span class="text-[${color}] font-bold tracking-widest mb-2 uppercase text-sm animate-pulse">${data.subtitle || 'TechZone Exclusive'}</span>
+                        ${subtitleText ? `<span class="text-[${color}] font-bold tracking-widest mb-2 uppercase text-sm animate-pulse">${subtitleText}</span>` : ''}
                         <h1 class="text-5xl md:text-7xl font-black text-white mb-6 leading-tight italic">
-                            ${data.title}
+                            ${titleText}
                         </h1>
-                        <a href="${data.link || '#'}" class="inline-block bg-transparent border-2 border-[${color}] text-[${color}] px-8 py-3 rounded font-black uppercase hover:bg-[${color}] hover:text-black transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] w-fit">
-                            ${data.btn_text || 'Shop Now'}
+                        <a href="${data.link || '#'}" class="inline-block bg-transparent border-2 border-[${btnColor}] text-[${btnColor}] px-8 py-3 rounded font-black uppercase hover:bg-[${btnColor}] hover:text-black transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] w-fit">
+                            ${btnText || 'Shop Now'}
                         </a>
                     </div>
                 `;
             } else if (data.link) {
-                // Image only but with link: Make entire slide clickable? 
-                // Or just an invisible link overlay? 
+                // Image only link overlay
                 contentHTML = `<a href="${data.link}" class="absolute inset-0 z-10" aria-label="View Offer"></a>`;
             }
 
             slidesHTML.push(`
                 <div class="carousel-slide absolute inset-0 opacity-0 transition-opacity duration-1000 ease-in-out ${index === 0 ? 'active' : ''}" data-index="${index}">
                     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('${data.image_url}');">
-                        <div class="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"></div>
+                        ${hasContent ? '<div class="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"></div>' : ''}
                     </div>
                     ${contentHTML}
                 </div>
