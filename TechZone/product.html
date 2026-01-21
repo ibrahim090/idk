@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechZone | Product Details</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js" defer></script>
+</head>
+
+<body class="bg-black text-white selection:bg-[#39ff14] selection:text-black">
+
+    <!-- Split Header -->
+    <header class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-gray-800/50">
+        <!-- Top Row: Logo, Search, Cart -->
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-8">
+            <!-- Logo -->
+            <a href="index.html" class="text-3xl font-black text-white tracking-tighter italic">
+                TECH<span class="text-[#39ff14]">ZONE</span>
+            </a>
+
+            <!-- Search Bar (Wide) -->
+            <div class="hidden md:block flex-1 max-w-2xl relative">
+                <input type="text" id="search-input" placeholder="Search for products, brands and more..."
+                    class="w-full bg-gray-900 border border-gray-700 text-white rounded-r-full rounded-l-full py-2.5 px-6 pl-12 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <button
+                    class="absolute right-1 top-1 bottom-1 bg-[#39ff14] text-black font-bold px-6 rounded-full hover:bg-[#32cc11] transition-colors uppercase text-sm tracking-wide">
+                    Search
+                </button>
+            </div>
+
+            <!-- Cart & Actions -->
+            <div class="flex items-center space-x-6">
+                <div class="relative cursor-pointer group" id="cart-btn">
+                    <div class="flex items-center space-x-2 text-white group-hover:text-[#39ff14] transition-colors">
+                        <div class="relative">
+                            <i class="fas fa-shopping-cart text-2xl"></i>
+                            <span id="cart-count"
+                                class="absolute -top-2 -right-2 bg-[#ff00ff] text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-black">0</span>
+                        </div>
+                        <div class="hidden lg:block text-xs font-bold text-left">
+                            <div class="text-gray-400 group-hover:text-[#39ff14]">Shopping</div>
+                            <div>Cart</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Navigation Links -->
+        <div class="border-t border-gray-800 bg-gray-900/50">
+            <div class="max-w-7xl mx-auto px-4 h-12 flex items-center">
+                <div class="flex space-x-8 text-sm font-bold uppercase tracking-wider text-gray-300">
+                    <a href="index.html"
+                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Home</a>
+                    <a href="laptops.html"
+                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Laptops</a>
+                    <a href="components.html"
+                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">PC
+                        Components</a>
+                    <a href="accessories.html"
+                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Accessories</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
+
+        <!-- Breadcrumbs -->
+        <nav class="flex mb-8 text-sm text-gray-500 font-mono">
+            <a href="index.html" class="hover:text-[#39ff14]">Home</a>
+            <span class="mx-2">/</span>
+            <span id="detail-category" class="text-gray-400">Product</span>
+            <span class="mx-2">/</span>
+            <span id="detail-name-crumb" class="text-white truncate max-w-xs">Loading...</span>
+        </nav>
+
+        <div id="product-detail-container" class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+            <!-- Left: Image -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-2xl relative group overflow-hidden">
+                <img id="detail-image" src="" alt="Product Image"
+                    class="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-105">
+                <div
+                    class="absolute top-4 right-4 bg-black/80 backdrop-blur px-3 py-1 rounded text-xs font-bold text-[#39ff14] border border-[#39ff14] uppercase tracking-wider">
+                    Official Warranty
+                </div>
+            </div>
+
+            <!-- Right: Info -->
+            <div class="space-y-6">
+
+                <div>
+                    <h1 id="detail-name" class="text-3xl md:text-5xl font-black text-white leading-tight mb-2">Loading
+                        Product...</h1>
+                    <div class="flex items-center space-x-4 text-sm text-gray-400">
+                        <span class="bg-gray-800 px-2 py-1 rounded" id="detail-sku">SKU: ...</span>
+                        <span class="flex items-center text-[#00f3ff]"><i class="fas fa-check-circle mr-1"></i> In
+                            Stock</span>
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-800 w-full"></div>
+
+                <div class="flex flex-col">
+                    <span class="text-gray-500 text-sm uppercase font-bold mb-1">Price</span>
+                    <span id="detail-price" class="text-5xl font-black text-[#39ff14] tracking-tight">$0.00</span>
+                </div>
+
+                <!-- Description -->
+                <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+                    <h3 class="text-white font-bold uppercase mb-2 border-l-4 border-[#00f3ff] pl-3">Description</h3>
+                    <p id="detail-desc" class="text-gray-400 text-sm leading-relaxed">
+                        No description available.
+                    </p>
+                </div>
+
+                <!-- Add to Cart -->
+                <div class="pt-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-900 border border-gray-700 rounded-lg flex items-center">
+                            <button class="px-4 py-3 text-white hover:text-[#39ff14] transition-colors"
+                                onclick="decreaseDetailQty()">-</button>
+                            <input type="number" id="detail-qty" value="1" min="1"
+                                class="bg-transparent w-12 text-center text-white focus:outline-none font-bold"
+                                readonly>
+                            <button class="px-4 py-3 text-white hover:text-[#39ff14] transition-colors"
+                                onclick="increaseDetailQty()">+</button>
+                        </div>
+                        <button id="add-to-cart-btn"
+                            class="flex-1 bg-[#39ff14] text-black font-black uppercase py-4 rounded-lg shadow-[0_0_20px_rgba(57,255,20,0.3)] hover:bg-white hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all transform hover:-translate-y-1">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Extra Info -->
+                <div class="grid grid-cols-2 gap-4 pt-6">
+                    <div class="flex items-center space-x-3 text-gray-400">
+                        <i class="fas fa-truck text-xl"></i>
+                        <span class="text-xs">Fast Shipping<br>Available</span>
+                    </div>
+                    <div class="flex items-center space-x-3 text-gray-400">
+                        <i class="fas fa-undo text-xl"></i>
+                        <span class="text-xs">Easy Returns<br> within 7 days</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black border-t border-gray-800 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-gray-500">&copy; 2026 TechZone. All rights reserved.</p>
+            <div class="mt-4 space-x-4">
+                <a href="admin.html" class="text-gray-700 hover:text-white text-xs">Admin Panel</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Modal (Shared) -->
+    <div id="cart-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onclick="toggleCart()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform"
+            id="cart-drawer">
+            <div class="flex flex-col h-full">
+                <!-- Cart Header -->
+                <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="text-2xl font-black text-white italic">YOUR CART</h2>
+                    <button onclick="toggleCart()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <!-- Cart Items -->
+                <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <!-- Items go here -->
+                    <p class="text-gray-500 text-center mt-10">Your cart is empty.</p>
+                </div>
+                <!-- Cart Footer -->
+                <div class="p-6 border-t border-gray-800 bg-black/50">
+                    <div class="flex justify-between items-end mb-4">
+                        <span class="text-gray-400 text-sm">Total</span>
+                        <span class="text-3xl font-bold text-[#39ff14]" id="cart-total">$0.00</span>
+                    </div>
+                    <a id="whatsapp-checkout" href="#" target="_blank"
+                        class="block w-full bg-[#00f3ff] text-black font-black text-center py-4 rounded uppercase tracking-wider hover:shadow-[0_0_20px_#00f3ff] transition-shadow">
+                        Checkout on WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
