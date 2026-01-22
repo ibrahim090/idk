@@ -33,15 +33,15 @@
             </a>
 
             <!-- Search Bar (Wide) -->
-            <div class="hidden md:block flex-1 max-w-2xl relative">
-                <input type="text" id="search-input" placeholder="Search for products, brands and more..."
+            <form action="search.html" method="GET" class="hidden md:block flex-1 max-w-2xl relative">
+                <input type="text" name="q" id="search-input" placeholder="Search for products, brands and more..."
                     class="w-full bg-gray-900 border border-gray-700 text-white rounded-r-full rounded-l-full py-2.5 px-6 pl-12 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <button
+                <button type="submit"
                     class="absolute right-1 top-1 bottom-1 bg-[#39ff14] text-black font-bold px-6 rounded-full hover:bg-[#32cc11] transition-colors uppercase text-sm tracking-wide">
                     Search
                 </button>
-            </div>
+            </form>
 
             <!-- Cart & Actions -->
             <div class="flex items-center space-x-6">
@@ -161,6 +161,34 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+        </div>
+
+        <!-- Related Products Slider -->
+        <div class="mt-24 border-t border-gray-800 pt-16 relative group/slider">
+            <h2 class="text-3xl font-black text-white italic border-l-4 border-[#39ff14] pl-4 animate-pulse mb-8">
+                YOU MIGHT ALSO LIKE
+            </h2>
+
+            <div class="relative">
+                <!-- Left Button -->
+                <button onclick="scrollRelated('left')"
+                    class="absolute -left-4 md:-left-8 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-[#39ff14] hover:text-black text-white w-12 h-12 rounded-full flex items-center justify-center transition-all border border-gray-700 backdrop-blur opacity-0 group-hover/slider:opacity-100 hover:scale-110 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+                    <i class="fas fa-chevron-left text-xl"></i>
+                </button>
+
+                <!-- Slider -->
+                <div id="related-slider" class="flex gap-6 overflow-x-auto pb-4 scroll-smooth snap-x scrollbar-hide">
+                    <!-- Dynamic Content -->
+                    <div class="w-full text-center py-12 text-gray-500 italic">Loading items...</div>
+                </div>
+
+                <!-- Right Button -->
+                <button onclick="scrollRelated('right')"
+                    class="absolute -right-4 md:-right-8 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-[#39ff14] hover:text-black text-white w-12 h-12 rounded-full flex items-center justify-center transition-all border border-gray-700 backdrop-blur opacity-0 group-hover/slider:opacity-100 hover:scale-110 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+                    <i class="fas fa-chevron-right text-xl"></i>
+                </button>
             </div>
         </div>
     </main>

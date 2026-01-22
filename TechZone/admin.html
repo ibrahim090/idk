@@ -177,6 +177,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Navigation Manager -->
+            <div class="bg-gray-900/50 p-6 rounded border border-gray-800 mt-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-compass text-[#39ff14] mr-2"></i>
+                    Navigation</h2>
+
+                <form id="add-nav-form" class="space-y-4 mb-6 border-b border-gray-800 pb-6">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase">Add New Section</h3>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1 uppercase">Section Name</label>
+                        <input type="text" id="n-label" placeholder="e.g. Gaming Chairs" required
+                            class="w-full bg-black border border-gray-800 p-2 rounded focus:border-[#39ff14] outline-none text-sm text-white">
+                        <p class="text-[10px] text-gray-500 mt-1">This will add a link to the menu and create a category
+                            for it.</p>
+                    </div>
+                    <button type="submit"
+                        class="w-full py-2 bg-[#39ff14] text-black font-bold uppercase hover:shadow-[0_0_15px_#39ff14] transition-shadow">
+                        Add Section
+                    </button>
+                </form>
+
+                <div>
+                    <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">Current Menu</h3>
+                    <div id="nav-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <p class="text-gray-500 text-sm text-center">Loading menu...</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Inventory List -->

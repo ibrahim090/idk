@@ -88,6 +88,8 @@ function initAdmin() {
                 loadAdminInventory();
                 loadAdminBanners();
                 loadAdminCategories(); // Load categories
+                loadAdminNavigation(); // Load navigation menu
+                loadPageTypes(); // Load dynamic types for dropdown
             } else {
                 authError.textContent = "Access Denied: Invalid PIN";
                 authError.classList.remove('hidden');
@@ -655,47 +657,101 @@ function initStorefront() {
 }
 
 // 0. Home Sidebar Loader
+// 0. Home Sidebar Loader (Dynamic & Standard)
 function loadHomeSidebar() {
-    const compList = document.getElementById('home-components-list');
-    const accList = document.getElementById('home-accessories-list');
-    const lapList = document.getElementById('home-laptops-list');
+    const navContainer = document.getElementById('home-sidebar-nav');
+    if (!navContainer) return;
 
-    // Only run if at least one list exists (meaning we're on home or layout has sidebar)
-    if (!compList && !accList && !lapList) return;
+    // 1. Fetch Navigation Sections (Ordered by creation to match Top Nav)
+    db.collection('navigation').orderBy('createdAt', 'asc').get().then(async navSnap => {
+        const sections = [];
 
-    db.collection("categories").get().then(snap => {
-        if (compList) compList.innerHTML = '';
-        if (accList) accList.innerHTML = '';
-        if (lapList) lapList.innerHTML = '<a href="laptops.html" class="block py-1.5 text-sm text-[#39ff14] font-bold hover:text-white transition-all">View All Laptops</a>';
+        navSnap.forEach(doc => {
+            const data = doc.data();
+            let typeId = data.type;
 
-        const categories = [];
-        snap.forEach(doc => categories.push(doc.data()));
-        categories.sort((a, b) => a.name.localeCompare(b.name));
+            // Fallback: Extract type from URL if not explicitly set
+            if (!typeId && data.url && data.url.includes('?type=')) {
+                typeId = data.url.split('?type=')[1];
+            }
 
-        categories.forEach(cat => {
-            // Generate Link HTML
-            const linkHTML = `
-                <a href="category.html?type=${cat.id}" 
-                   class="block py-1.5 text-sm text-gray-400 hover:text-[#00f3ff] hover:translate-x-1 transition-all flex items-center gap-2">
-                   <i class="${cat.icon} text-xs w-4"></i> ${cat.name}
-                </a>
-            `;
-
-            if (cat.type === 'component' && compList) {
-                compList.insertAdjacentHTML('beforeend', linkHTML);
-            } else if (cat.type === 'accessory' && accList) {
-                accList.insertAdjacentHTML('beforeend', linkHTML);
-            } else if (cat.type === 'laptop' && lapList) {
-                lapList.insertAdjacentHTML('beforeend', linkHTML);
+            // Only add if we identified a type (means it's a category-based section)
+            if (typeId) {
+                sections.push({
+                    label: data.label,
+                    type: typeId,
+                    url: data.url
+                });
             }
         });
 
-        // Fallback for empty
-        if (compList && compList.children.length === 0)
-            compList.innerHTML = '<span class="text-xs text-gray-600 italic px-2">No components found</span>';
-        if (accList && accList.children.length === 0)
-            accList.innerHTML = '<span class="text-xs text-gray-600 italic px-2">No accessories found</span>';
-        // Laptops always has at least 1 child (View All), so no fallback needed usually.
+        // 2. Fetch All Categories for mapping
+        const catSnap = await db.collection("categories").get();
+        const categories = [];
+        catSnap.forEach(doc => categories.push(doc.data()));
+
+        // Group Categories by Type
+        const catsByType = {};
+        categories.forEach(cat => {
+            if (!catsByType[cat.type]) catsByType[cat.type] = [];
+            catsByType[cat.type].push(cat);
+        });
+
+        // 3. Render Sidebar
+        navContainer.innerHTML = '';
+
+        sections.forEach(section => {
+            // Get categories for this section
+            const sectionCats = catsByType[section.type] || [];
+
+            // Sort categories by name
+            sectionCats.sort((a, b) => a.name.localeCompare(b.name));
+
+            // Default Open Standard Sections (Laptops, Components, Accessories)
+            // They have specific types we know. Or we can just default all to open?
+            // User screenshot shows them closed except one? Original HTML had open.
+            // Let's keep the explicit list for 'open' default just for UX, or check if it matches standard types.
+            const isOpen = ['laptop', 'component', 'accessory'].includes(section.type) ? 'open' : '';
+
+            const details = document.createElement('details');
+            details.className = 'group/acc border-b border-gray-800/50';
+            if (isOpen) details.setAttribute('open', '');
+
+            let listItems = ``;
+
+            // "View All" Link
+            listItems += `
+                <a href="${section.url}"
+                   class="block py-1.5 text-sm text-[#39ff14] font-bold hover:text-white transition-all">
+                   View All ${section.label}
+                </a>
+            `;
+
+            if (sectionCats.length === 0) {
+                listItems += `<span class="text-xs text-gray-500 italic px-2">No categories found</span>`;
+            } else {
+                sectionCats.forEach(cat => {
+                    listItems += `
+                        <a href="category.html?id=${cat.id}" 
+                           class="block py-1.5 text-sm text-gray-400 hover:text-[#00f3ff] hover:translate-x-1 transition-all flex items-center gap-2">
+                           <i class="${cat.icon || 'fas fa-folder'} text-xs w-4"></i> ${cat.name}
+                        </a>
+                    `;
+                });
+            }
+
+            details.innerHTML = `
+                <summary class="px-5 py-3 text-gray-300 hover:bg-gray-800 hover:text-[#39ff14] cursor-pointer list-none flex items-center justify-between transition-all">
+                    <span>${section.label}</span>
+                    <i class="fas fa-chevron-down text-xs transition-transform group-open/acc:rotate-180"></i>
+                </summary>
+                <div class="bg-black/50 pl-8 py-2 space-y-1">
+                    ${listItems}
+                </div>
+            `;
+
+            navContainer.appendChild(details);
+        });
 
     }).catch(e => {
         console.error("Home Sidebar Error", e);
@@ -1028,11 +1084,87 @@ function loadProductDetails() {
             if (els.qty && els.qty.value > 1) els.qty.value--;
         };
 
+        // Load Related Products
+        loadRelatedProducts(doc.id);
+
     }).catch(e => {
         console.error("Detail Error", e);
         if (els.name) els.name.innerText = "Error loading product.";
     });
 }
+
+// Function to Load Related Products (Slider)
+function loadRelatedProducts(currentId) {
+    const slider = document.getElementById('related-slider');
+    if (!slider) return;
+
+    // Fetch random subset (simulated by fetching limit 20 then shuffling)
+    db.collection('products').limit(20).get().then(snap => {
+        if (snap.empty) {
+            slider.innerHTML = '<div class="w-full text-center text-gray-500 italic">No related items found.</div>';
+            return;
+        }
+
+        let products = [];
+        snap.forEach(doc => {
+            if (doc.id !== currentId) { // Exclude current product
+                products.push({ id: doc.id, ...doc.data() });
+            }
+        });
+
+        // Shuffle Array
+        products = products.sort(() => 0.5 - Math.random());
+        // Take top 8
+        products = products.slice(0, 8);
+
+        if (products.length === 0) {
+            slider.innerHTML = '<div class="w-full text-center text-gray-500 italic">No other items found.</div>';
+            return;
+        }
+
+        slider.innerHTML = '';
+        products.forEach(prod => {
+            // Responsive width: Mobile 100%, Tablet 2 (50%), Desktop 4 (25%)
+            // Adjusting for gap-6 (24px)
+            // Desktop: (100% - 3*24px)/4 = 25% - 18px
+            // Tablet: (100% - 1*24px)/2 = 50% - 12px
+            const card = `
+                <div class="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col snap-start group hover:border-[#39ff14] transition-all">
+                    <a href="product.html?id=${prod.id}" class="block overflow-hidden rounded-lg mb-4 relative aspect-square">
+                        <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </a>
+                    <div class="flex-1 flex flex-col">
+                        <h4 class="text-white font-bold mb-1 truncate">${prod.name}</h4>
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mb-3">${prod.category}</p>
+                        <div class="mt-auto flex items-center justify-between">
+                            <span class="text-[#39ff14] font-black text-lg">$${prod.price}</span>
+                            <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                                    class="bg-gray-800 hover:bg-[#39ff14] hover:text-black text-white w-8 h-8 rounded flex items-center justify-center transition-colors">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            slider.insertAdjacentHTML('beforeend', card);
+        });
+
+    });
+}
+
+window.scrollRelated = function (direction) {
+    const slider = document.getElementById('related-slider');
+    if (!slider) return;
+
+    // Scroll by visible width to reveal distinct new set of products
+    const scrollAmount = slider.clientWidth;
+
+    if (direction === 'left') {
+        slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+        slider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+};
 function showModal(title, message, isError = true) {
     const existing = document.getElementById('gen-modal');
     if (existing) existing.remove();
@@ -1255,7 +1387,7 @@ window.loadAdminCategories = function () {
                             </div>
                             <div>
                                 <p class="text-sm font-bold text-white">${cat.name}</p>
-                                <p class="text-xs text-gray-500 uppercase">${cat.type} | ID: ${cat.id}</p>
+                                <p class="text-xs text-gray-500"><span class="uppercase">${cat.type}</span> | ID: <span class="font-mono text-gray-400">${cat.id}</span></p>
                             </div>
                         </div>
                         <button onclick="deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-400">
@@ -1287,4 +1419,761 @@ window.deleteCategory = (id) => {
     if (confirm("Delete this category? Products associated with it will lose their category association.")) {
         db.collection("categories").doc(id).delete().then(loadAdminCategories);
     }
+};
+
+/* ============================
+   SEARCH PAGE LOGIC
+   ============================ */
+
+let searchResults = []; // Global store for filtering/sorting
+let searchViewMode = 'grid'; // 'grid' or 'list'
+
+// Search submission is now handled by native HTML <form action="search.html"> attributes.
+// Removed handleSearchSubmit to prevent conflicts.
+
+// --- Cart Toggle Logic ---
+window.toggleCart = function () {
+    const modal = document.getElementById('cart-modal');
+    if (modal) {
+        modal.classList.toggle('hidden');
+    }
+};
+
+window.initSearchPage = function () {
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q');
+    const container = document.getElementById('search-results-container');
+    const termDisplay = document.getElementById('search-term');
+    const bgSearchInput = document.getElementById('search-input'); // The one in header
+
+    if (!query) {
+        if (container) container.innerHTML = '<div class="col-span-full text-center text-gray-500">Please enter a search term.</div>';
+        return;
+    }
+
+    if (termDisplay) termDisplay.innerText = query;
+    if (bgSearchInput) bgSearchInput.value = query;
+
+    // Fetch ALL products (Client-side filtering mainly for simplicity)
+    db.collection("products").get().then(snap => {
+        const allProducts = [];
+        snap.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
+
+        // Filter
+        const qLower = query.toLowerCase();
+        searchResults = allProducts.filter(p => {
+            return p.name.toLowerCase().includes(qLower) ||
+                (p.description && p.description.toLowerCase().includes(qLower)) ||
+                (p.category && p.category.toLowerCase().includes(qLower));
+        });
+
+        // Update Count
+        const countDisplay = document.getElementById('result-count');
+        if (countDisplay) countDisplay.innerText = searchResults.length;
+
+        renderSearchResults();
+
+    }).catch(e => {
+        console.error("Search Error", e);
+        if (container) container.innerHTML = '<div class="col-span-full text-center text-red-500">Error loading results.</div>';
+    });
+};
+
+window.renderSearchResults = function () {
+    const container = document.getElementById('search-results-container');
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (searchResults.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full text-center py-20 flex flex-col items-center">
+                <i class="fas fa-search text-6xl text-gray-800 mb-6"></i>
+                <h3 class="text-2xl font-bold text-gray-500 mb-2">No results found</h3>
+                <p class="text-gray-600">Try checking your spelling or use different keywords.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Apply Sort
+    const sortParams = document.querySelector('input[name="sort"]:checked');
+    const sortVal = sortParams ? sortParams.value : 'latest';
+
+    searchResults.sort((a, b) => {
+        if (sortVal === 'price_asc') return a.price - b.price;
+        if (sortVal === 'price_desc') return b.price - a.price;
+        if (sortVal === 'alpha') return a.name.localeCompare(b.name);
+        // Default latest (assuming created_at exists, else minimal sort)
+        if (a.created_at && b.created_at) return b.created_at - a.created_at;
+        return 0;
+    });
+
+    // Update View Layout Classes
+    if (searchViewMode === 'list') {
+        container.className = "flex flex-col gap-4"; // List Layout
+    } else {
+        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"; // Grid Layout
+    }
+
+    searchResults.forEach(prod => {
+        let cardHTML = '';
+        const isList = searchViewMode === 'list';
+
+        if (isList) {
+            // LIST ITEM
+            cardHTML = `
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-6 hover:border-[#39ff14] transition-all group">
+                    <a href="product.html?id=${prod.id}" class="w-48 h-32 flex-shrink-0 bg-black rounded-lg overflow-hidden">
+                        <img src="${prod.image_url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${prod.name}">
+                    </a>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-xl font-bold text-white mb-1">
+                                    <a href="product.html?id=${prod.id}" class="hover:text-[#39ff14] transition-colors">${prod.name}</a>
+                                </h3>
+                                <div class="text-right">
+                                    <span class="block text-2xl font-black text-[#39ff14]">$${prod.price}</span>
+                                    ${prod.stock > 0 ? `<span class="text-xs text-[#00f3ff]"><i class="fas fa-check-circle"></i> In Stock</span>` : `<span class="text-xs text-red-500">Out of Stock</span>`}
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">${prod.category}</p>
+                            <p class="text-gray-400 text-sm line-clamp-2">${prod.description || 'No description available.'}</p>
+                        </div>
+                        <div class="flex items-center gap-4 mt-4">
+                             <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                                    class="bg-[#39ff14] text-black font-bold uppercase px-6 py-2 rounded hover:bg-white transition-colors text-sm">
+                                <i class="fas fa-cart-plus mr-2"></i> Add to Cart
+                            </button>
+                            <a href="product.html?id=${prod.id}" class="text-gray-400 hover:text-white text-sm underline decoration-gray-700 hover:decoration-white transition-all underline-offset-4">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // GRID ITEM (Standard)
+            cardHTML = `
+                <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden group hover:border-[#39ff14] transition-all flex flex-col h-full">
+                    <a href="product.html?id=${prod.id}" class="block relative aspect-square overflow-hidden bg-black">
+                        <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        ${prod.stock === 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-sm uppercase">Out of Stock</span></div>' : ''}
+                    </a>
+                    <div class="p-5 flex flex-col flex-1">
+                        <div class="mb-3">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${prod.category}</span>
+                            <h3 class="text-lg font-bold text-white leading-tight mt-1 group-hover:text-[#39ff14] transition-colors line-clamp-2">
+                                <a href="product.html?id=${prod.id}">${prod.name}</a>
+                            </h3>
+                        </div>
+                        <div class="mt-auto flex items-end justify-between">
+                            <div>
+                                <span class="block text-2xl font-black text-[#39ff14]">$${prod.price}</span>
+                            </div>
+                            <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                                class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-[#39ff14] hover:text-black transition-all shadow-lg group-active:scale-95" 
+                                ${prod.stock === 0 ? 'disabled' : ''}>
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.insertAdjacentHTML('beforeend', cardHTML);
+    });
+};
+
+window.applySearchSort = function () {
+    renderSearchResults();
+};
+
+window.setView = function (mode) {
+    searchViewMode = mode;
+
+    // Update Button Styles
+    const btnGrid = document.getElementById('view-grid');
+    const btnList = document.getElementById('view-list');
+
+    if (mode === 'grid') {
+        if (btnGrid) btnGrid.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
+        if (btnList) btnList.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
+    } else {
+        if (btnList) btnList.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
+        if (btnGrid) btnGrid.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
+    }
+
+    renderSearchResults();
+};
+
+// Auto-run on search page
+if (window.location.pathname.includes('search.html')) {
+    document.addEventListener('DOMContentLoaded', initSearchPage);
+}
+
+/* ============================
+   NAVIGATION MANAGEMENT
+   ============================ */
+
+window.toggleNavType = () => {
+    const type = document.getElementById('n-type').value;
+    const catContainer = document.getElementById('n-cat-container');
+    const urlContainer = document.getElementById('n-url-container');
+
+    if (type === 'category') {
+        catContainer.classList.remove('hidden');
+        urlContainer.classList.add('hidden');
+        // Populate categories logic
+        const catSelect = document.getElementById('n-cat-select');
+        // If empty, fetch
+        if (catSelect && catSelect.options.length <= 1) {
+            db.collection('categories').get().then(snap => {
+                catSelect.innerHTML = '<option value="" disabled selected>Select Category</option>';
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    catSelect.appendChild(opt);
+                });
+            });
+        }
+    } else {
+        catContainer.classList.add('hidden');
+        urlContainer.classList.remove('hidden');
+    }
+};
+
+window.loadAdminNavigation = () => {
+    const list = document.getElementById('nav-list');
+    if (!list) return;
+
+    list.innerHTML = '<p class="text-center text-gray-500">Loading...</p>';
+
+    db.collection('navigation').orderBy('createdAt', 'asc').get().then(snap => {
+        list.innerHTML = '';
+        if (snap.empty) {
+            list.innerHTML = '<p class="text-gray-500 text-center text-sm">No menu items. Site using defaults.</p>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const item = doc.data();
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center bg-black border border-gray-800 p-2 rounded';
+            div.innerHTML = `
+                <div>
+                    <p class="text-white font-bold text-sm">${item.label}</p>
+                    <p class="text-xs text-gray-500">${item.url}</p>
+                </div>
+                <button onclick="deleteNavItem('${doc.id}')" class="text-red-500 hover:text-white px-2">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            list.appendChild(div);
+        });
+    });
+};
+
+window.deleteNavItem = (id) => {
+    if (confirm('Remove this menu item? This will also remove the associated Category and Page Type.')) {
+        // 1. Get the Nav Item to find the Type slug
+        db.collection('navigation').doc(id).get().then(doc => {
+            if (!doc.exists) {
+                db.collection('navigation').doc(id).delete().then(loadAdminNavigation);
+                return;
+            }
+
+            const data = doc.data();
+            const url = data.url;
+            // Expecting: category.html?type=slug
+            if (url && url.includes('type=')) {
+                const slug = url.split('type=')[1];
+                if (slug) {
+                    console.log("Deleting linked resources for:", slug);
+                    // 2. Delete Page Type
+                    db.collection('types').doc(slug).delete();
+                    // 3. Delete Default Category
+                    db.collection('categories').doc(slug).delete();
+                }
+            }
+
+            // 4. Delete Nav Link
+            db.collection('navigation').doc(id).delete().then(() => {
+                loadAdminNavigation();
+                loadAdminCategories(); // Refresh list to show category gone
+                loadPageTypes(); // Refresh dropdown
+            });
+        });
+    }
+};
+
+// Add Nav Listener
+const addNavForm = document.getElementById('add-nav-form');
+if (addNavForm) {
+    addNavForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const label = document.getElementById('n-label').value;
+        if (!label) return;
+
+        // Generate Slug
+        const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const url = `category.html?type=${id}`; // Link by TYPE
+
+        // 1. Save as a Page Type (for Dropdown)
+        db.collection('types').doc(id).set({
+            id: id,
+            name: label,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        // 2. Add to Navigation
+        db.collection('navigation').add({
+            label,
+            url,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert(`Section "${label}" added! Start adding categories to it manually.`);
+            addNavForm.reset();
+            loadAdminNavigation();
+            loadPageTypes(); // Refresh dropdown
+        });
+    });
+}
+
+// --- ONE-TIME MIGRATION: Seed Standard Nav ---
+window.seedStandardNavigation = async () => {
+    const standard = [
+        { id: 'nav-laptops', label: 'Laptops', url: 'laptops.html', type: 'laptop', createdAt: Date.now() },
+        { id: 'nav-components', label: 'PC Components', url: 'components.html', type: 'component', createdAt: Date.now() + 1 },
+        { id: 'nav-accessories', label: 'Accessories', url: 'accessories.html', type: 'accessory', createdAt: Date.now() + 2 }
+    ];
+
+    for (const item of standard) {
+        const doc = await db.collection('navigation').doc(item.id).get();
+        if (!doc.exists) {
+            console.log(`Seeding navigation: ${item.label}`);
+            await db.collection('navigation').doc(item.id).set(item);
+        }
+    }
+};
+
+// Global Nav Renderer
+window.renderGlobalNavigation = () => {
+    const navContainer = document.getElementById('dynamic-nav');
+    if (!navContainer) return;
+
+    // Seed on load (harmless if already exists)
+    seedStandardNavigation().then(() => {
+        db.collection('navigation').orderBy('createdAt', 'asc').get().then(snap => {
+            // Define standard links (Just Home)
+            const links = [
+                { label: 'Home', url: 'index.html' }
+            ];
+
+            // Add dynamic links (Now includes Laptops, Components, Accessories)
+            snap.forEach(doc => {
+                links.push(doc.data());
+            });
+
+            // Determine current page for highlighting
+            const currentPath = window.location.pathname;
+            const currentSearch = window.location.search;
+
+            let html = '';
+
+            links.forEach(link => {
+                let isActive = false;
+
+                // Check matching URL
+                if (link.url === 'index.html' && (currentPath.endsWith('index.html') || currentPath.endsWith('/'))) {
+                    isActive = true;
+                } else if (currentPath.includes(link.url.split('?')[0])) {
+                    if (link.url.includes('?')) {
+                        if (currentSearch === link.url.substring(link.url.indexOf('?'))) {
+                            isActive = true;
+                        }
+                    } else {
+                        isActive = true;
+                    }
+                }
+
+                const activeClass = isActive ? 'text-[#39ff14] font-bold' : 'hover:text-white hover:bg-gray-800 text-gray-300';
+
+                html += `<a href="${link.url}" class="px-3 h-8 flex items-center rounded transition-all uppercase text-sm tracking-wider ${activeClass}">${link.label}</a>`;
+            });
+
+            navContainer.innerHTML = html;
+            navContainer.classList.remove('hidden');
+        }).catch(e => {
+            console.error("Nav Load Error", e);
+        });
+    });
+};
+
+document.addEventListener('DOMContentLoaded', renderGlobalNavigation);
+
+// Load Page Types into "Add Category" Dropdown
+window.loadPageTypes = () => {
+    const typeSelect = document.getElementById('c-type');
+    if (!typeSelect) return;
+
+    // Keep Default Options? 
+    // We should probably clear and re-add defaults OR just append. 
+    // To avoid duplicates on re-run, let's clear custom ones? 
+    // Easier to just rebuild standard ones + dynamic ones.
+
+    typeSelect.innerHTML = `
+        <option value="component">Component Page</option>
+        <option value="accessory">Accessory Page</option>
+        <option value="laptop">Laptop Page</option>
+        <option disabled>──────────</option>
+    `;
+
+    db.collection('types').get().then(snap => {
+        // Also populate Admin Cleanup List
+        const adminList = document.getElementById('types-list');
+        if (adminList) adminList.innerHTML = '';
+
+        snap.forEach(doc => {
+            const t = doc.data();
+
+            // 1. Dropdown Option
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = `${t.name} Page`;
+            typeSelect.appendChild(opt);
+
+            // 2. Admin List Item
+            if (adminList) {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-black border border-gray-800 p-2 rounded';
+                div.innerHTML = `
+                    <span class="text-xs text-gray-400 font-mono">${t.name} Page</span>
+                    <button onclick="window.deletePageType('${doc.id}')" class="text-red-500 hover:text-white px-2">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                adminList.appendChild(div);
+            }
+        });
+    });
+};
+
+window.deletePageType = (id) => {
+    if (confirm('Delete this Page Type? The dropdown option will be removed.')) {
+        db.collection('types').doc(id).delete().then(() => {
+            loadPageTypes();
+            // Also refresh other lists if needed
+        });
+    }
+};
+
+/* ============================
+   GENERIC CATEGORY/TYPE PAGE LOGIC
+   ============================ */
+/* ============================
+   GENERIC CATEGORY/TYPE PAGE LOGIC
+   ============================ */
+window.initCategoryPage = function () {
+    const params = new URLSearchParams(window.location.search);
+    const catId = params.get('id');
+    const typeId = params.get('type');
+
+    // Elements
+    const container = document.getElementById('product-container') || document.getElementById('search-results-container');
+    const sidebarContainer = document.getElementById('sidebar-container'); // The wrapper
+    const sidebarList = document.getElementById('dynamic-sidebar-categories'); // The UL
+
+    if (catId) {
+        // --- SINGLE CATEGORY MODE (Standard Grid) ---
+        if (sidebarContainer) sidebarContainer.classList.add('hidden'); // Hide sidebar categories in single mode
+
+        db.collection('products').where('category', '==', catId).get().then(snap => {
+            const products = [];
+            snap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+
+            // Update Title
+            db.collection('categories').doc(catId).get().then(doc => {
+                if (doc.exists) {
+                    const title = document.getElementById('page-title');
+                    if (title) title.innerText = doc.data().name;
+                    const sub = document.getElementById('page-subtitle');
+                    if (sub) sub.innerText = `Explore our collection of ${doc.data().name}`;
+                    document.title = `TechZone | ${doc.data().name}`;
+                }
+            });
+
+            searchResults = products;
+            renderSearchResults(); // Use standard grid renderer
+        }).catch(err => console.error("Error loading category products:", err));
+
+    } else if (typeId) {
+        // --- TYPE MODE (Grouped Sections + Sidebar) ---
+        // This makes it look like "Components" page
+        console.log(`Loading Type Grouped Layout: ${typeId}`);
+
+        // 1. Setup Page Title
+        db.collection('types').doc(typeId).get().then(doc => {
+            let typeName = typeId.replace(/-/g, ' ').toUpperCase();
+            if (doc.exists) typeName = doc.data().name;
+
+            const title = document.getElementById('page-title');
+            if (title) title.innerText = typeName;
+            const sub = document.getElementById('page-subtitle');
+            if (sub) sub.innerText = `Browse all ${typeName} items`;
+            document.title = `TechZone | ${typeName}`;
+        });
+
+        // 2. Fetch Categories AND Products
+        Promise.all([
+            db.collection('categories').where('type', '==', typeId).get(),
+            db.collection('products').get() // Fetch all (cached) to filter client-side
+        ]).then(([catSnap, prodSnap]) => {
+
+            // A. Prepare Categories
+            const categories = [];
+            catSnap.forEach(doc => categories.push(doc.data()));
+            // Sort by name
+            categories.sort((a, b) => a.name.localeCompare(b.name));
+
+            // B. Prepare Products (Map for faster lookup if needed, or just array)
+            const allProducts = [];
+            prodSnap.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
+
+            // Clear Container for Custom Rendering
+            if (container) {
+                container.innerHTML = '';
+                container.className = 'space-y-16'; // Vertical spacing between sections
+            }
+
+            // Setup Sidebar
+            if (sidebarContainer && sidebarList) {
+                sidebarContainer.classList.remove('hidden');
+                sidebarList.innerHTML = '';
+                if (categories.length === 0) {
+                    sidebarList.innerHTML = '<li class="text-gray-500 text-xs px-2">No categories found.</li>';
+                }
+            }
+
+            let hasAnyProducts = false;
+
+            // C. Render Groups
+            categories.forEach(cat => {
+                // Filter Products for this Category
+                const catProducts = allProducts.filter(p => p.category === cat.id);
+
+                // Add to Sidebar
+                if (sidebarList) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="#cat-${cat.id}" class="block px-4 py-2 text-sm text-gray-400 hover:text-[#39ff14] hover:bg-white/5 rounded transition-colors group flex items-center">
+                        <i class="${cat.icon || 'fas fa-circle'} w-5 group-hover:text-[#39ff14] text-gray-600"></i> ${cat.name}
+                    </a>`;
+                    sidebarList.appendChild(li);
+                }
+
+                // If no products, skip section rendering (keeps page clean)
+                // OR render empty section if you want to show it exists? 
+                // "Components" page usually shows headings. Let's show header even if empty, or checking user preference.
+                // User said "copy mechanism". Usually mechanism hides empty or shows them.
+                // I'll show them if they have products, to be safe. 
+                // Wait, if I hide them, user might think category doesn't exist.
+                // But valid categories with 0 products are sad.
+                // Let's render if products > 0 OR if it's a valid category. 
+                // Let's render ALL valid categories.
+
+                // Construct Section HTML
+                // Using Grid layout for the products inside
+                let productsHTML = '';
+                if (catProducts.length > 0) {
+                    hasAnyProducts = true;
+                    // Limit to 4 for preview? Or show all? Components page usually shows all or subset.
+                    // Let's show all for now.
+                    catProducts.forEach(prod => {
+                        // Reuse Card HTML Logic (Simplified)
+                        productsHTML += `
+                            <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden group hover:border-[#39ff14] transition-all flex flex-col h-full">
+                                <a href="product.html?id=${prod.id}" class="block relative aspect-square overflow-hidden bg-black">
+                                    <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                    ${prod.stock === 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-sm uppercase">Out of Stock</span></div>' : ''}
+                                </a>
+                                <div class="p-5 flex flex-col flex-1">
+                                    <div class="mb-3">
+                                        <h3 class="text-lg font-bold text-white leading-tight mt-1 group-hover:text-[#39ff14] transition-colors line-clamp-2">
+                                            <a href="product.html?id=${prod.id}">${prod.name}</a>
+                                        </h3>
+                                    </div>
+                                    <div class="mt-auto flex items-end justify-between">
+                                        <span class="block text-xl font-black text-[#39ff14]">$${prod.price}</span>
+                                        <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                                            class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-[#39ff14] hover:text-black transition-all shadow-lg" 
+                                            ${prod.stock === 0 ? 'disabled' : ''}>
+                                            <i class="fas fa-cart-plus font-small"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                         `;
+                    });
+                } else {
+                    productsHTML = '<div class="col-span-full text-gray-600 italic text-sm py-4">No products in this category yet.</div>';
+                }
+
+                // Append Section
+                const section = document.createElement('section');
+                section.id = `cat-${cat.id}`;
+                section.innerHTML = `
+                    <h2 class="text-2xl font-black text-white uppercase tracking-tight mb-6 flex items-center gap-3 border-b border-gray-800 pb-4">
+                        <span class="text-[#39ff14]"><i class="${cat.icon || 'fas fa-layer-group'}"></i></span> ${cat.name}
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${productsHTML}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+
+            if (categories.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-gray-500">
+                    <i class="fas fa-ghost text-4xl mb-4 text-gray-700"></i><br>
+                    No categories found for this section.<br>
+                    <span class="text-xs">Go to Admin > Categories and create a category with Type: <strong>${typeName || typeId}</strong></span>
+                 </div>`;
+            }
+
+        }).catch(err => console.error("Error loading type page:", err));
+    }
+};
+
+if (window.location.pathname.includes('category.html')) {
+    document.addEventListener('DOMContentLoaded', initCategoryPage);
+}
+
+// Patch renderSearchResults to support category.html container
+const originalRender = window.renderSearchResults;
+window.renderSearchResults = function () {
+    // Try finding search container first
+    let container = document.getElementById('search-results-container');
+    // If not found, look for product-container (used in category.html)
+    if (!container) {
+        container = document.getElementById('product-container');
+        // We need to inject the ID into the original function context or handle it here.
+        // Since original function hardcodes 'search-results-container', we must OVERRIDE it completely or modify HTML.
+        // Easier to just modify the function body above? 
+        // But I'm in Append mode.
+        // I will Redefine it here fully if needed, or I'll just change category.html logic to use 'search-results-container' id?
+        // No, category.html (Step 1920) has 'product-container'.
+        // I will REDEFINE renderSearchResults here to be safe and robust.
+    }
+
+    // REDEFINED LOGIC (See below)
+    if (!container) return; // Should not happen
+
+    container.innerHTML = "";
+
+    if (searchResults.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full text-center py-20 flex flex-col items-center">
+                <i class="fas fa-box-open text-6xl text-gray-800 mb-6"></i>
+                <h3 class="text-2xl font-bold text-gray-500 mb-2">No products found</h3>
+                <p class="text-gray-600">Check back later for stock updates.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort implementation (copied from earlier to ensure scope access)
+    const sortParams = document.querySelector('input[name="sort"]:checked');
+    const sortVal = sortParams ? sortParams.value : 'latest';
+
+    searchResults.sort((a, b) => {
+        if (sortVal === 'price_asc') return a.price - b.price;
+        if (sortVal === 'price_desc') return b.price - a.price;
+        if (sortVal === 'alpha') return a.name.localeCompare(b.name);
+        if (a.created_at && b.created_at) return b.created_at - a.created_at;
+        return 0;
+    });
+
+    if (searchViewMode === 'list') {
+        container.className = "flex flex-col gap-4";
+    } else {
+        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+    }
+
+    searchResults.forEach(prod => {
+        // Reuse Card Generation Logic?
+        // It's long. I'll just use a Grid Card Only for now to save space, or copy full.
+        // Copying full logic for consistency.
+
+        let cardHTML = '';
+        const isList = searchViewMode === 'list';
+
+        // ... (Using the same card template as top of file) ...
+        if (isList) {
+            // LIST ITEM
+            cardHTML = `
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-6 hover:border-[#39ff14] transition-all group">
+                    <a href="product.html?id=${prod.id}" class="w-48 h-32 flex-shrink-0 bg-black rounded-lg overflow-hidden">
+                        <img src="${prod.image_url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${prod.name}">
+                    </a>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-xl font-bold text-white mb-1">
+                                    <a href="product.html?id=${prod.id}" class="hover:text-[#39ff14] transition-colors">${prod.name}</a>
+                                </h3>
+                                <div class="text-right">
+                                    <span class="block text-2xl font-black text-[#39ff14]">$${prod.price}</span>
+                                    ${prod.stock > 0 ? `<span class="text-xs text-[#00f3ff]"><i class="fas fa-check-circle"></i> In Stock</span>` : `<span class="text-xs text-red-500">Out of Stock</span>`}
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">${prod.category}</p>
+                            <p class="text-gray-400 text-sm line-clamp-2">${prod.description || 'No description available.'}</p>
+                        </div>
+                        <div class="flex items-center gap-4 mt-4">
+                             <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                                    class="bg-[#39ff14] text-black font-bold uppercase px-6 py-2 rounded hover:bg-white transition-colors text-sm">
+                                <i class="fas fa-cart-plus mr-2"></i> Add to Cart
+                            </button>
+                            <a href="product.html?id=${prod.id}" class="text-gray-400 hover:text-white text-sm underline decoration-gray-700 hover:decoration-white transition-all underline-offset-4">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            cardHTML = `
+                <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden group hover:border-[#39ff14] transition-all flex flex-col h-full">
+                    <a href="product.html?id=${prod.id}" class="block relative aspect-square overflow-hidden bg-black">
+                        <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        ${prod.stock === 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-sm uppercase">Out of Stock</span></div>' : ''}
+                    </a>
+                    <div class="p-5 flex flex-col flex-1">
+                        <div class="mb-3">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${prod.category}</span>
+                            <h3 class="text-lg font-bold text-white leading-tight mt-1 group-hover:text-[#39ff14] transition-colors line-clamp-2">
+                                <a href="product.html?id=${prod.id}">${prod.name}</a>
+                            </h3>
+                        </div>
+                        <div class="mt-auto flex items-end justify-between">
+                            <div>
+                                <span class="block text-2xl font-black text-[#39ff14]">$${prod.price}</span>
+                            </div>
+                            <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                                class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-[#39ff14] hover:text-black transition-all shadow-lg group-active:scale-95" 
+                                ${prod.stock === 0 ? 'disabled' : ''}>
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.insertAdjacentHTML('beforeend', cardHTML);
+    });
 };

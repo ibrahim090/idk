@@ -25,15 +25,15 @@
             </a>
 
             <!-- Search Bar (Wide) -->
-            <div class="hidden md:block flex-1 max-w-2xl relative">
-                <input type="text" id="search-input" placeholder="Search for products, brands and more..."
+            <form action="search.html" method="GET" class="hidden md:block flex-1 max-w-2xl relative">
+                <input type="text" name="q" id="search-input" placeholder="Search for products, brands and more..."
                     class="w-full bg-gray-900 border border-gray-700 text-white rounded-r-full rounded-l-full py-2.5 px-6 pl-12 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <button
+                <button type="submit"
                     class="absolute right-1 top-1 bottom-1 bg-[#39ff14] text-black font-bold px-6 rounded-full hover:bg-[#32cc11] transition-colors uppercase text-sm tracking-wide">
                     Search
                 </button>
-            </div>
+            </form>
 
             <!-- Cart & Actions -->
             <div class="flex items-center space-x-6">
@@ -56,7 +56,8 @@
         <!-- Bottom Row: Navigation Links -->
         <div class="border-t border-gray-800 bg-gray-900/50">
             <div class="max-w-7xl mx-auto px-4 h-12 flex items-center">
-                <div class="flex space-x-8 text-sm font-bold uppercase tracking-wider text-gray-300">
+                <div id="dynamic-nav" class="flex space-x-8 text-sm font-bold uppercase tracking-wider text-gray-300">
+                    <!-- Default State before JS Loads -->
                     <a href="index.html"
                         class="text-[#39ff14] border-b-2 border-[#39ff14] h-12 flex items-center">Home</a>
                     <a href="laptops.html"
@@ -82,7 +83,7 @@
                         <i class="fas fa-bars"></i> Browse Categories
                     </span>
                 </div>
-                <nav class="flex flex-col py-2">
+                <nav id="home-sidebar-nav" class="flex flex-col py-2">
                     <!-- Laptops (Accordion) -->
                     <details class="group/acc border-b border-gray-800/50">
                         <summary

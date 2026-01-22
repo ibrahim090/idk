@@ -27,20 +27,20 @@
                 </div>
                 <!-- Nav Links -->
                 <div class="hidden md:block">
-                    <div class="ml-10 flex items-center space-x-8">
-                        <a href="laptops.html" class="hover:text-[#39ff14] transition-colors">Laptops</a>
-                        <a href="components.html" class="text-[#39ff14] font-bold transition-colors">Components</a>
-                        <a href="accessories.html" class="hover:text-[#39ff14] transition-colors">Accessories</a>
+                    <div id="dynamic-nav" class="flex items-center space-x-8">
+                        <!-- Populated by app.js -->
+                        <span class="text-gray-500 text-xs italic">Loading menu...</span>
                     </div>
                 </div>
                 <!-- Search Bar -->
-                <div class="hidden md:flex items-center flex-1 mx-8">
+                <!-- Search Bar -->
+                <form action="search.html" method="GET" class="hidden md:flex items-center flex-1 mx-8">
                     <div class="relative w-full max-w-md">
-                        <input type="text" id="search-input" placeholder="Search for components..."
+                        <input type="text" name="q" id="search-input" placeholder="Search for components..."
                             class="w-full bg-gray-900 border border-gray-700 text-white rounded-full py-1.5 px-4 pl-10 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 text-sm transition-all">
                         <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                     </div>
-                </div>
+                </form>
                 <!-- Cart Icon -->
                 <div class="relative cursor-pointer" id="cart-btn">
                     <i class="fas fa-shopping-cart text-[#00f3ff] text-xl"></i>

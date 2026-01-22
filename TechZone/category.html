@@ -23,61 +23,40 @@
 
 <body class="bg-black text-white selection:bg-[#39ff14] selection:text-black">
 
-    <!-- Split Header -->
-    <header class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-gray-800/50">
-        <!-- Top Row: Logo, Search, Cart -->
-        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-8">
-            <!-- Logo -->
-            <a href="index.html" class="text-3xl font-black text-white tracking-tighter italic">
-                TECH<span class="text-[#39ff14]">ZONE</span>
-            </a>
-
-            <!-- Search Bar (Wide) -->
-            <div class="hidden md:block flex-1 max-w-2xl relative">
-                <input type="text" id="search-input" placeholder="Search for products, brands and more..."
-                    class="w-full bg-gray-900 border border-gray-700 text-white rounded-r-full rounded-l-full py-2.5 px-6 pl-12 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <button
-                    class="absolute right-1 top-1 bottom-1 bg-[#39ff14] text-black font-bold px-6 rounded-full hover:bg-[#32cc11] transition-colors uppercase text-sm tracking-wide">
-                    Search
-                </button>
-            </div>
-
-            <!-- Cart & Actions -->
-            <div class="flex items-center space-x-6">
-                <div class="relative cursor-pointer group" id="cart-btn">
-                    <div class="flex items-center space-x-2 text-white group-hover:text-[#39ff14] transition-colors">
-                        <div class="relative">
-                            <i class="fas fa-shopping-cart text-2xl"></i>
-                            <span id="cart-count"
-                                class="absolute -top-2 -right-2 bg-[#ff00ff] text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-black">0</span>
-                        </div>
-                        <div class="hidden lg:block text-xs font-bold text-left">
-                            <div class="text-gray-400 group-hover:text-[#39ff14]">Shopping</div>
-                            <div>Cart</div>
-                        </div>
+    <!-- Navbar -->
+    <nav class="border-b border-gray-800 sticky top-0 bg-black/90 backdrop-blur z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="index.html" class="text-2xl font-black text-white tracking-tighter">
+                        TECH<span class="text-[#39ff14]">ZONE</span>
+                    </a>
+                </div>
+                <!-- Nav Links -->
+                <div class="hidden md:block">
+                    <div id="dynamic-nav" class="flex items-center space-x-8">
+                        <!-- Populated by app.js -->
+                        <span class="text-gray-500 text-xs italic">Loading menu...</span>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Bottom Row: Navigation Links -->
-        <div class="border-t border-gray-800 bg-gray-900/50">
-            <div class="max-w-7xl mx-auto px-4 h-12 flex items-center">
-                <div class="flex space-x-8 text-sm font-bold uppercase tracking-wider text-gray-300">
-                    <a href="index.html"
-                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Home</a>
-                    <a href="laptops.html"
-                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Laptops</a>
-                    <a href="components.html"
-                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">PC
-                        Components</a>
-                    <a href="accessories.html"
-                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Accessories</a>
+                <!-- Search Bar -->
+                <form action="search.html" method="GET" class="hidden md:flex items-center flex-1 mx-8">
+                    <div class="relative w-full max-w-md">
+                        <input type="text" name="q" id="search-input" placeholder="Search for products..."
+                            class="w-full bg-gray-900 border border-gray-700 text-white rounded-full py-1.5 px-4 pl-10 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 text-sm transition-all">
+                        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    </div>
+                </form>
+                <!-- Cart Icon -->
+                <div class="relative cursor-pointer" id="cart-btn">
+                    <i class="fas fa-shopping-cart text-[#00f3ff] text-xl"></i>
+                    <span id="cart-count"
+                        class="absolute -top-2 -right-2 bg-[#ff00ff] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
                 </div>
             </div>
         </div>
-    </header>
+    </nav>
 
     <!-- Header -->
     <div class="bg-gray-900 border-b border-gray-800 py-10">
@@ -94,6 +73,19 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Sidebar -->
             <aside class="lg:col-span-3 space-y-6">
+                <!-- Categories List (Dynamic) -->
+                <div id="sidebar-container"
+                    class="hidden bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mb-6">
+                    <div class="p-4 border-b border-gray-800">
+                        <h3 class="font-bold text-white uppercase tracking-wider flex items-center">
+                            <i class="fas fa-layer-group text-[#39ff14] mr-2"></i> Categories
+                        </h3>
+                    </div>
+                    <ul id="dynamic-sidebar-categories" class="p-2 space-y-1">
+                        <!-- Links Injected Here -->
+                    </ul>
+                </div>
+
                 <!-- Sorting Options -->
                 <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div class="p-6">
