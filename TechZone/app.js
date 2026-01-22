@@ -90,6 +90,7 @@ function initAdmin() {
                 loadAdminCategories(); // Load categories
                 loadAdminNavigation(); // Load navigation menu
                 loadPageTypes(); // Load dynamic types for dropdown
+                loadAdminOrders(); // Load Orders
             } else {
                 authError.textContent = "Access Denied: Invalid PIN";
                 authError.classList.remove('hidden');
@@ -358,7 +359,11 @@ function loadAdminInventory() {
                 <td class="p-3 font-semibold text-white">${data.name}</td>
                 <td class="p-3"><span class="px-2 py-1 text-xs rounded bg-gray-800 text-gray-300">${data.category}</span></td>
                 <td class="p-3 text-[#39ff14]">$${data.price}</td>
-                <td class="p-3 font-mono text-[#00f3ff]">${data.stock || 0}</td>
+                <td class="p-3">
+                    <input type="number" value="${data.stock !== undefined ? data.stock : 0}" 
+                           class="w-20 bg-black border border-gray-700 p-1 text-[#00f3ff] text-center rounded focus:border-[#39ff14] outline-none font-mono"
+                           onchange="window.updateProductStock('${doc.id}', this.value)">
+                </td>
                 <td class="p-3 text-right">
                     <button class="text-red-500 hover:text-red-400 p-2" onclick="window.deleteProduct('${doc.id}')">
                         <i class="fas fa-trash"></i>
@@ -377,6 +382,18 @@ function loadAdminInventory() {
         tbody.innerHTML = `<tr><td colspan="6" class="text-red-500 p-4 font-bold text-center">${msg}</td></tr>`;
     });
 }
+
+window.updateProductStock = (id, newStock) => {
+    const qty = parseInt(newStock);
+    if (isNaN(qty)) return; // Prevent bad data
+
+    // Optional: Visual feedback (toast)?
+    db.collection("products").doc(id).update({ stock: qty }).then(() => {
+        console.log(`Stock updated for ${id} to ${qty}`);
+        // Maybe flash border?
+        // For now silent update is fine or console log.
+    }).catch(e => alert("Failed to update stock: " + e.message));
+};
 
 // Global scope for onclick access
 window.deleteProduct = (id) => {
@@ -475,6 +492,12 @@ function setupCartModal() {
 
 window.addToCart = function (product, qty = 1, btnElement = null) {
     // Product should have: id, name, price, image, stock (opt)
+    // STOCK CHECK
+    if (product.stock !== undefined && product.stock <= 0) {
+        alert("This product is currently out of stock.");
+        return;
+    }
+
     const maxStock = product.stock || 999;
 
     // Check if item exists
@@ -610,6 +633,188 @@ function updateCartUI() {
     }).join('');
 
     if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
+
+    // Update Checkout Button Listener
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.onclick = startCheckout;
+    }
+}
+
+// --- ORDER SYSTEM LOGIC ---
+
+// 1. Setup Modal (Inject HTML)
+function setupOrderModal() {
+    if (document.getElementById('order-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'order-modal';
+    modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md p-6 relative shadow-2xl m-4">
+            <button onclick="closeOrderModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <h2 class="text-2xl font-black text-white italic uppercase mb-6">
+                Checkout <span class="text-[#39ff14]">Order</span>
+            </h2>
+
+            <form id="order-form" onsubmit="submitOrder(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-1">Full Name</label>
+                    <input type="text" id="ord-name" required class="w-full bg-black border border-gray-800 p-3 rounded focus:border-[#39ff14] outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-1">Phone Number</label>
+                    <input type="tel" id="ord-phone" required class="w-full bg-black border border-gray-800 p-3 rounded focus:border-[#39ff14] outline-none text-white">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-1">Shipping Address</label>
+                    <textarea id="ord-address" required rows="3" class="w-full bg-black border border-gray-800 p-3 rounded focus:border-[#39ff14] outline-none text-white resize-none"></textarea>
+                </div>
+
+                <div class="border-t border-gray-800 pt-4 mt-4">
+                    <div class="flex justify-between text-sm text-gray-400 mb-4">
+                        <span>Total Items:</span>
+                        <span class="text-white font-bold" id="ord-count">0</span>
+                    </div>
+                    <div class="flex justify-between text-lg text-white font-bold mb-6">
+                        <span>Total:</span>
+                        <span class="text-[#39ff14]" id="ord-total">$0.00</span>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-[#39ff14] text-black font-black uppercase tracking-wider rounded hover:shadow-[0_0_20px_#39ff14] transition-all">
+                        Confirm Order
+                    </button>
+                    <button type="button" onclick="closeOrderModal()" class="w-full py-3 mt-2 text-gray-500 hover:text-white uppercase text-xs font-bold">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// 2. Open/Close Logic
+// 2. Start Checkout (Redirect)
+window.startCheckout = function () {
+    if (STATE.cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+    }
+    window.location.href = 'checkout.html';
+};
+
+window.closeOrderModal = function () {
+    // Deprecated
+};
+
+// 3. Submit Order
+// 3. Submit Order
+// 3. Checkout Page Logic
+function initCheckoutPage() {
+    if (!window.location.pathname.includes('checkout.html')) return;
+
+    // Redirect if empty
+    if (STATE.cart.length === 0) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Render Summary
+    const container = document.getElementById('checkout-items');
+    const totalEl = document.getElementById('checkout-total');
+    let total = 0;
+
+    container.innerHTML = STATE.cart.map(item => {
+        total += item.price * item.qty;
+        return `
+            <div class="flex gap-4 items-center">
+                <img src="${item.image}" class="w-12 h-12 object-cover rounded bg-gray-800">
+                <div class="flex-1">
+                    <h4 class="text-white text-sm font-bold line-clamp-1">${item.name}</h4>
+                    <p class="text-xs text-gray-500">${item.qty} x $${item.price}</p>
+                </div>
+                <span class="text-[#39ff14] text-sm font-mono">$${(item.price * item.qty).toFixed(2)}</span>
+            </div>
+        `;
+    }).join('');
+    totalEl.textContent = `$${total.toFixed(2)}`;
+
+    // Handle Form Submit
+    const form = document.getElementById('checkout-form');
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
+            btn.textContent = "Processing...";
+            btn.disabled = true;
+
+            const firstName = document.getElementById('chk-first-name').value;
+            const lastName = document.getElementById('chk-last-name').value;
+            const country = document.getElementById('chk-country').value;
+            const governorate = document.getElementById('chk-governorate').value;
+            const email = document.getElementById('chk-email').value;
+            const phone = document.getElementById('chk-phone').value;
+            const addressDetails = document.getElementById('chk-address').value;
+            const notes = document.getElementById('chk-notes').value;
+
+            const orderItems = STATE.cart.map(item => ({
+                id: item.id || 'unknown',
+                name: item.name || 'Unknown Item',
+                price: item.price || 0,
+                qty: item.qty || 1,
+                image: item.image || 'assets/placeholder.jpg',
+                link: `product.html?id=${item.id}`
+            }));
+
+            const order = {
+                customer: {
+                    name: `${firstName} ${lastName}`,
+                    firstName, lastName,
+                    country, governorate,
+                    email, phone,
+                    address: `${country}, ${governorate}, ${addressDetails}`,
+                    notes
+                },
+                items: orderItems,
+                total: total,
+                status: 'pending',
+                createdAt: Date.now()
+            };
+
+            try {
+                // 1. Create Order
+                await db.collection("orders").add(order);
+
+                // 2. Decrement Stock
+                const batch = db.batch();
+                STATE.cart.forEach(item => {
+                    if (item.id && item.id !== 'unknown') {
+                        const ref = db.collection('products').doc(item.id);
+                        batch.update(ref, { stock: firebase.firestore.FieldValue.increment(-item.qty) });
+                    }
+                });
+                await batch.commit();
+
+                // 3. Cleanup
+                STATE.cart = [];
+                saveCart();
+                alert("Order Placed Successfully!");
+                window.location.href = 'index.html';
+            } catch (err) {
+                console.error("Order Error:", err);
+                alert("Failed to place order. Please try again.");
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        };
+    }
 }
 
 /* ============================
@@ -653,6 +858,10 @@ function initStorefront() {
     // Product Details Page
     else if (path.includes('product.html')) {
         loadProductDetails(); // Now self-contained
+    }
+    // Checkout Page
+    else if (path.includes('checkout.html')) {
+        initCheckoutPage();
     }
 }
 
@@ -887,13 +1096,13 @@ function renderGrid(products, container) {
         return;
     }
 
-    container.innerHTML = products.map(product => `
-        <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col">
+    container.innerHTML = products.map(product => {
+        const isOutOfStock = (product.stock !== undefined && product.stock <= 0);
+        return `
+        <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
+            ${isOutOfStock ? `<div class="absolute top-4 left-[-10px] bg-red-600 text-white px-3 py-1 text-xs font-bold uppercase -rotate-45 z-20 shadow-lg border border-red-800 tracking-wider">Not Available</div>` : ''}
             <a href="product.html?id=${product.id}" class="block relative h-48 overflow-hidden bg-black cursor-pointer">
                 <img src="${product.image_url}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                <div class="absolute top-2 right-2 bg-black/80 backdrop-blur text-xs font-bold px-2 py-1 rounded border border-gray-700 text-[#39ff14]">
-                    ${product.stock > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
-                </div>
             </a>
             <div class="p-5 flex-1 flex flex-col">
                 <div class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-bold">${product.category || 'Hardware'}</div>
@@ -901,16 +1110,22 @@ function renderGrid(products, container) {
                     <a href="product.html?id=${product.id}">${product.name}</a>
                 </h3>
                 <div class="mt-auto pt-4 flex items-center justify-between border-t border-gray-800">
-                    <span class="text-2xl font-black text-white italic">$${product.price}</span>
-                    <button onclick="window.addToCartFromCard(this, '${product.id}', '${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.image_url}', ${product.stock})" 
-                        class="w-10 h-10 rounded-full bg-[#39ff14] text-black flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-[0_0_15px_rgba(57,255,20,0.4)]"
-                        ${product.stock === 0 ? 'disabled style="background-color:#555; cursor:not-allowed;"' : ''}>
-                        <i class="fas fa-cart-plus"></i>
-                    </button>
+                    ${isOutOfStock ?
+                `<span class="text-[#ff9900] font-bold uppercase text-xs">Not Available</span>` :
+                `<span class="text-2xl font-black text-white italic">$${product.price}</span>`
+            }
+                    
+                    ${isOutOfStock ?
+                `<button disabled class="bg-[#ff9900] text-black font-bold py-2 px-3 rounded opacity-50 cursor-not-allowed uppercase tracking-wider text-[10px]">Unavailable</button>` :
+                `<button onclick="window.addToCartFromCard(this, '${product.id}', '${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.image_url}', ${product.stock})" 
+                            class="w-10 h-10 rounded-full bg-[#39ff14] text-black flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-[0_0_15px_rgba(57,255,20,0.4)]">
+                            <i class="fas fa-cart-plus"></i>
+                        </button>`
+            }
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // 6. Generic Load Products Helper (for Dynamic Sections)
@@ -1051,10 +1266,10 @@ function loadProductDetails() {
         // Stock Logic
         if (isOutOfStock) {
             if (els.addBtn) {
-                els.addBtn.disabled = true; // Changed to disabled for simplicity or use modal logic
-                els.addBtn.innerText = "Out of Stock";
-                els.addBtn.classList.add('bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
-                els.addBtn.classList.remove('bg-[#39ff14]', 'text-black', 'hover:bg-white');
+                els.addBtn.disabled = true;
+                els.addBtn.innerText = "This product is not available";
+                // Force styling for disabled state
+                els.addBtn.className = "w-full bg-[#ff9900] text-black font-bold py-4 rounded opacity-50 cursor-not-allowed uppercase tracking-wider shadow-none";
             }
             if (els.qty) els.qty.disabled = true;
         } else {
@@ -2051,6 +2266,184 @@ window.initCategoryPage = function () {
 if (window.location.pathname.includes('category.html')) {
     document.addEventListener('DOMContentLoaded', initCategoryPage);
 }
+
+// --- ADMIN ORDER LOGIC ---
+// --- ADMIN ORDER LOGIC ---
+window.loadAdminOrders = function () {
+    const grid = document.getElementById('admin-orders-grid');
+    if (!grid) return; // Not on admin page or not ready
+
+    db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snap => {
+        grid.innerHTML = '';
+        if (snap.empty) {
+            grid.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-500 opacity-50">
+                    <i class="fas fa-clipboard-list text-6xl mb-4"></i>
+                    <p class="text-xl font-bold">No Orders Yet</p>
+                </div>`;
+            return;
+        }
+
+        snap.forEach(doc => {
+            const order = doc.data();
+            const date = new Date(order.createdAt).toLocaleString();
+            const statusColor = order.status === 'delivered' ? 'bg-green-500/20 text-green-500 border-green-500/50' :
+                (order.status === 'processing' ? 'bg-blue-500/20 text-blue-500 border-blue-500/50' : 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50');
+
+            // Items HTML
+            let itemsHtml = order.items.map(item => {
+                const link = item.link || `product.html?id=${item.id}`; // Fallback
+                const subtotal = item.price * item.qty;
+                return `
+                    <div class="flex gap-4 py-3 border-b border-dashed border-gray-800 last:border-0">
+                        <img src="${item.image || 'assets/placeholder.jpg'}" class="w-12 h-12 object-cover rounded bg-black border border-gray-800">
+                        <div class="flex-1 min-w-0">
+                            <a href="${link}" target="_blank" class="text-sm font-bold text-gray-300 hover:text-[#39ff14] truncate block flex items-center gap-1">
+                                ${item.name} <i class="fas fa-external-link-alt text-[10px] opacity-50"></i>
+                            </a>
+                            <div class="flex justify-between items-center mt-1 text-xs">
+                                <span class="text-gray-500">${item.qty} x $${item.price.toFixed(2)}</span>
+                                <span class="text-white font-mono">$${subtotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Card HTML
+            const card = document.createElement('div');
+            card.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden flex flex-col shadow-lg hover:border-gray-700 transition-colors relative group";
+            card.innerHTML = `
+                <!-- Status Bar -->
+                <div class="h-1 w-full bg-gradient-to-r from-gray-800 to-gray-900 group-hover:from-[#39ff14] group-hover:to-[#00f3ff] transition-all"></div>
+                
+                <div class="p-5 flex-1 flex flex-col">
+                    <!-- Header -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider font-bold">Order #${doc.id.slice(0, 6)}</p>
+                            <p class="text-[10px] text-gray-600">${date}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded text-[10px] font-black uppercase border ${statusColor}">
+                            ${order.status}
+                        </span>
+                    </div>
+
+                    <!-- Customer Info -->
+                    <div class="bg-black/40 rounded p-3 mb-4 space-y-2 border border-gray-800/50">
+                        <div class="flex items-center gap-2 text-sm text-white font-bold">
+                            <i class="fas fa-user-circle text-gray-600"></i> ${order.customer.name}
+                        </div>
+                        ${order.customer.email ? `<div class="text-xs text-gray-500 ml-6 flex items-center gap-2"><i class="fas fa-envelope"></i> ${order.customer.email}</div>` : ''}
+                        
+                        <a href="tel:${order.customer.phone}" class="flex items-center gap-2 text-xs text-gray-400 hover:text-[#39ff14] transition-colors w-fit">
+                            <i class="fas fa-phone"></i> ${order.customer.phone}
+                        </a>
+                        
+                        <div class="flex items-start gap-2 text-xs text-gray-400 group/addr cursor-pointer hover:text-white transition-colors" 
+                             onclick="navigator.clipboard.writeText('${order.customer.address}'); alert('Address Copied!')" 
+                             title="Click to Copy">
+                            <i class="fas fa-map-marker-alt mt-0.5"></i>
+                            <p class="line-clamp-2">${order.customer.address}</p>
+                            <i class="fas fa-copy ml-auto opacity-0 group-hover/addr:opacity-100 transition-opacity"></i>
+                        </div>
+
+                        ${order.customer.notes ? `
+                        <div class="mt-2 p-2 bg-gray-800/50 rounded text-xs text-gray-300 italic border-l-2 border-[#ff9900]">
+                            <strong>Note:</strong> "${order.customer.notes}"
+                        </div>` : ''}
+                    </div>
+
+                    <!-- Items List -->
+                    <div class="flex-1 mb-4">
+                        <div class="text-[10px] uppercase text-gray-600 font-bold mb-2">Items Ordered</div>
+                        <div class="max-h-40 overflow-y-auto pr-1 scrollbar-hide">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="pt-4 border-t border-gray-800 flex items-center justify-between mt-auto">
+                        <div>
+                            <p class="text-xs text-gray-500">Total Amount</p>
+                            <p class="text-xl font-black text-[#39ff14]">$${order.total.toFixed(2)}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="printOrder('${doc.id}')" class="w-8 h-8 rounded bg-gray-800 text-gray-400 hover:bg-white hover:text-black flex items-center justify-center transition-colors" title="Print Receipt">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            ${order.status !== 'delivered' ? `
+                            <button onclick="updateOrderStatus('${doc.id}', 'delivered')" class="w-8 h-8 rounded bg-gray-800 text-gray-400 hover:bg-[#39ff14] hover:text-black flex items-center justify-center transition-colors" title="Mark Delivered">
+                                <i class="fas fa-check"></i>
+                            </button>` : ''}
+                            <button onclick="deleteOrder('${doc.id}')" class="w-8 h-8 rounded bg-gray-800 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors" title="Delete Order">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    });
+};
+
+window.updateOrderStatus = (id, status) => {
+    db.collection('orders').doc(id).update({ status: status });
+};
+
+window.printOrder = (id) => {
+    // Simple Print Logic: Open new window with order details
+    db.collection('orders').doc(id).get().then(doc => {
+        if (!doc.exists) return;
+        const order = doc.data();
+        const w = window.open('', '_blank');
+        w.document.write(`
+            <html>
+            <head>
+                <title>Order #${id}</title>
+                <style>
+                    body { font-family: monospace; padding: 40px; max-width: 400px; margin: 0 auto; }
+                    .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 20px; margin-bottom: 20px; }
+                    .item { display: flex; justify-content: space-between; margin-bottom: 10px; }
+                    .total { border-top: 1px dashed #000; margin-top: 20px; padding-top: 10px; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>TECHZONE</h1>
+                    <p>Order Receipt</p>
+                    <small>${new Date(order.createdAt).toLocaleString()}</small>
+                </div>
+                <div>
+                    <p><strong>Customer:</strong><br>${order.customer.name}<br>${order.customer.phone}<br>${order.customer.address}</p>
+                </div>
+                <hr style="border-top: 1px dashed #000; margin: 20px 0;">
+                <div>
+                    ${order.items.map(i => `
+                        <div class="item">
+                            <span>${i.qty} val ${i.name}</span>
+                            <span>$${(i.price * i.qty).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="total">
+                    <span>TOTAL</span>
+                    <span>$${order.total.toFixed(2)}</span>
+                </div>
+                <script>window.print(); window.onafterprint = () => window.close();<\/script>
+            </body>
+            </html>
+        `);
+        w.document.close();
+    });
+};
+
+window.deleteOrder = function (id) {
+    if (confirm("Are you sure you want to delete this order? This cannot be undone.")) {
+        db.collection('orders').doc(id).delete(); // Snapshot listener will auto-update UI
+    }
+};
 
 // Patch renderSearchResults to support category.html container
 const originalRender = window.renderSearchResults;

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechZone | Checkout</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Config & Logic -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js" defer></script>
+</head>
+
+<body class="bg-black text-white selection:bg-[#39ff14] selection:text-black font-['Inter']">
+
+    <!-- Navbar -->
+    <nav class="border-b border-gray-800 sticky top-0 bg-black/90 backdrop-blur z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="index.html" class="text-2xl font-black text-white tracking-tighter">
+                        TECH<span class="text-[#39ff14]">ZONE</span>
+                    </a>
+                </div>
+                <!-- Nav Links -->
+                <div class="hidden md:block">
+                    <div id="dynamic-nav" class="flex items-center space-x-8">
+                        <a href="index.html"
+                            class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all text-gray-400 font-bold uppercase text-sm">Home</a>
+                        <a href="laptops.html"
+                            class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all text-gray-400 font-bold uppercase text-sm">Laptops</a>
+                        <a href="components.html"
+                            class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all text-gray-400 font-bold uppercase text-sm">PC
+                            Components</a>
+                        <a href="accessories.html"
+                            class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all text-gray-400 font-bold uppercase text-sm">Accessories</a>
+                    </div>
+                </div>
+                <!-- Cart Icon (Minimal) -->
+                <div class="relative cursor-pointer" onclick="window.location.href='index.html'">
+                    <i class="fas fa-arrow-left text-[#39ff14] text-xl"></i>
+                    <span class="text-xs font-bold ml-2">Back to Store</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-12">
+
+        <!-- Breadcrumbs -->
+        <nav class="flex mb-8 text-sm text-gray-500 font-mono">
+            <a href="index.html" class="hover:text-[#39ff14]">Home</a>
+            <span class="mx-2">/</span>
+            <span class="text-white">Checkout</span>
+        </nav>
+
+        <h1 class="text-center text-[#ff9900] font-bold text-xl mb-12 tracking-wider uppercase">Customer Information
+        </h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+            <!-- Left: Form -->
+            <div class="lg:col-span-2">
+                <form id="checkout-form" class="space-y-6">
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-500 text-sm font-bold mb-2">First Name *</label>
+                            <input type="text" id="chk-first-name" required
+                                class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#ff9900]">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 text-sm font-bold mb-2">Last Name *</label>
+                            <input type="text" id="chk-last-name" required
+                                class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#ff9900]">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-500 text-sm font-bold mb-2">Country *</label>
+                            <input type="text" id="chk-country" value="Iraq" readonly
+                                class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 text-sm font-bold mb-2">Governorate *</label>
+                            <select id="chk-governorate" required
+                                class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#ff9900]">
+                                <option value="">Select</option>
+                                <option value="Baghdad">Baghdad</option>
+                                <option value="Basra">Basra</option>
+                                <option value="Erbil">Erbil</option>
+                                <option value="Mosul">Mosul</option>
+                                <option value="Najaf">Najaf</option>
+                                <option value="Karbala">Karbala</option>
+                                <option value="Kirkuk">Kirkuk</option>
+                                <option value="Sulaymaniyah">Sulaymaniyah</option>
+                                <option value="Duhok">Duhok</option>
+                                <option value="Anbar">Anbar</option>
+                                <option value="Diyala">Diyala</option>
+                                <option value="Wasit">Wasit</option>
+                                <option value="Babil">Babil</option>
+                                <option value="Maysan">Maysan</option>
+                                <option value="Muthanna">Muthanna</option>
+                                <option value="Qadisiyah">Qadisiyah</option>
+                                <option value="Saladin">Saladin</option>
+                                <option value="Dhi Qar">Dhi Qar</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-500 text-sm font-bold mb-2">Your Email Address
+                                (Optional)</label>
+                            <input type="email" id="chk-email"
+                                class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#ff9900]">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 text-sm font-bold mb-2">Phone *</label>
+                            <input type="tel" id="chk-phone" required
+                                class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#ff9900]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-500 text-sm font-bold mb-2">Area (Address Details) *</label>
+                        <input type="text" id="chk-address" required
+                            class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#ff9900]">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-500 text-sm font-bold mb-2">Order Notes (Optional)</label>
+                        <textarea id="chk-notes" rows="4"
+                            class="w-full bg-gray-500 text-black p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#ff9900]"></textarea>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-[#aa5555] text-black font-bold py-4 rounded hover:bg-[#ff9900] transition-colors mt-8 uppercase tracking-wider">
+                        Place Order (Cash on Delivery)
+                    </button>
+
+                </form>
+            </div>
+
+            <!-- Right: Order Summary -->
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 lg:sticky lg:top-24">
+                <h3 class="text-white font-bold uppercase border-b border-gray-800 pb-4 mb-4">Order Summary</h3>
+                <div id="checkout-items" class="space-y-4 max-h-60 overflow-y-auto mb-6 pr-2">
+                    <!-- Items -->
+                    <p class="text-gray-500 text-sm italic">Loading...</p>
+                </div>
+                <div class="border-t border-gray-800 pt-4 flex justify-between items-center text-xl font-bold">
+                    <span>Total</span>
+                    <span id="checkout-total" class="text-[#39ff14]">$0.00</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 bg-gray-900 py-12 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-gray-500">&copy; 2026 TechZone. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>
