@@ -360,9 +360,11 @@ function loadAdminInventory() {
                 <td class="p-3"><span class="px-2 py-1 text-xs rounded bg-gray-800 text-gray-300">${data.category}</span></td>
                 <td class="p-3 text-[#39ff14]">$${data.price}</td>
                 <td class="p-3">
-                    <input type="number" value="${data.stock !== undefined ? data.stock : 0}" 
+                    <input type="number" min="0" value="${data.stock !== undefined ? data.stock : 0}" 
                            class="w-20 bg-black border border-gray-700 p-1 text-[#00f3ff] text-center rounded focus:border-[#39ff14] outline-none font-mono"
-                           onchange="window.updateProductStock('${doc.id}', this.value)">
+                           onkeypress="return (event.charCode >= 48 && event.charCode <= 57)"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                           onchange="if(this.value === '' || parseInt(this.value) < 0) this.value = 0; window.updateProductStock('${doc.id}', this.value)">
                 </td>
                 <td class="p-3 text-right">
                     <button class="text-red-500 hover:text-red-400 p-2" onclick="window.deleteProduct('${doc.id}')">
@@ -1100,23 +1102,24 @@ function renderGrid(products, container) {
         const isOutOfStock = (product.stock !== undefined && product.stock <= 0);
         return `
         <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
-            ${isOutOfStock ? `<div class="absolute top-4 left-[-10px] bg-red-600 text-white px-3 py-1 text-xs font-bold uppercase -rotate-45 z-20 shadow-lg border border-red-800 tracking-wider">Not Available</div>` : ''}
+            ${isOutOfStock ? `<div class="absolute top-6 left-[-45px] w-[170px] bg-[#39ff14] text-black text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-[#32cc11]">Not Available</div>` : ''}
             <a href="product.html?id=${product.id}" class="block relative h-48 overflow-hidden bg-black cursor-pointer">
-                <img src="${product.image_url}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                <img src="${product.image_url}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
             </a>
             <div class="p-5 flex-1 flex flex-col">
                 <div class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-bold">${product.category || 'Hardware'}</div>
+                ${(product.stock !== undefined && product.stock > 0) ? `<div class="text-[#39ff14] text-[10px] font-bold mb-1 font-mono tracking-wide">In Stock : ${product.stock} Only</div>` : ''}
                 <h3 class="text-white font-bold text-lg mb-2 leading-tight group-hover:text-[#39ff14] transition-colors line-clamp-2">
                     <a href="product.html?id=${product.id}">${product.name}</a>
                 </h3>
                 <div class="mt-auto pt-4 flex items-center justify-between border-t border-gray-800">
                     ${isOutOfStock ?
-                `<span class="text-[#ff9900] font-bold uppercase text-xs">Not Available</span>` :
+                `<span class="text-[#39ff14]/70 font-bold uppercase text-xs">Out of Stock</span>` :
                 `<span class="text-2xl font-black text-white italic">$${product.price}</span>`
             }
                     
                     ${isOutOfStock ?
-                `<button disabled class="bg-[#ff9900] text-black font-bold py-2 px-3 rounded opacity-50 cursor-not-allowed uppercase tracking-wider text-[10px]">Unavailable</button>` :
+                `<button disabled class="bg-gray-900 text-[#39ff14] font-bold py-2 px-3 rounded cursor-not-allowed uppercase text-[10px] border border-[#39ff14]/50 opacity-70">Sold Out</button>` :
                 `<button onclick="window.addToCartFromCard(this, '${product.id}', '${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.image_url}', ${product.stock})" 
                             class="w-10 h-10 rounded-full bg-[#39ff14] text-black flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-[0_0_15px_rgba(57,255,20,0.4)]">
                             <i class="fas fa-cart-plus"></i>
@@ -1236,6 +1239,7 @@ function loadProductDetails() {
         nameCrumb: document.getElementById('detail-name-crumb'),
         cat: document.getElementById('detail-category'),
         price: document.getElementById('detail-price'),
+        stock: document.getElementById('detail-stock'),
         desc: document.getElementById('detail-desc'),
         sku: document.getElementById('detail-sku'),
         qty: document.getElementById('detail-qty'),
@@ -1260,6 +1264,7 @@ function loadProductDetails() {
         if (els.nameCrumb) els.nameCrumb.innerText = data.name;
         if (els.cat) els.cat.innerText = data.category;
         if (els.price) els.price.innerText = `$${data.price}`;
+        if (els.stock && stock > 0) els.stock.textContent = `In Stock : ${stock} Only`;
         if (els.desc) els.desc.innerText = data.description || "No description available for this product.";
         if (els.sku) els.sku.innerText = `SKU: ${doc.id.substring(0, 8).toUpperCase()}`;
 
@@ -1267,9 +1272,9 @@ function loadProductDetails() {
         if (isOutOfStock) {
             if (els.addBtn) {
                 els.addBtn.disabled = true;
-                els.addBtn.innerText = "This product is not available";
+                els.addBtn.innerText = "Currently Unavailable";
                 // Force styling for disabled state
-                els.addBtn.className = "w-full bg-[#ff9900] text-black font-bold py-4 rounded opacity-50 cursor-not-allowed uppercase tracking-wider shadow-none";
+                els.addBtn.className = "w-full bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/50 font-bold py-4 rounded cursor-not-allowed uppercase tracking-wider shadow-none opacity-80";
             }
             if (els.qty) els.qty.disabled = true;
         } else {
@@ -1769,30 +1774,24 @@ window.renderSearchResults = function () {
                 </div>
             `;
         } else {
-            // GRID ITEM (Standard)
+            // GRID CARD
             cardHTML = `
-                <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden group hover:border-[#39ff14] transition-all flex flex-col h-full">
-                    <a href="product.html?id=${prod.id}" class="block relative aspect-square overflow-hidden bg-black">
-                        <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                        ${prod.stock === 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-sm uppercase">Out of Stock</span></div>' : ''}
+                <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-[#39ff14] transition-all group relative">
+                    ${ribbon}
+                    <a href="product.html?id=${prod.id}" class="block h-48 overflow-hidden relative">
+                         <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
+                        <img src="${prod.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}" alt="${prod.name}">
                     </a>
-                    <div class="p-5 flex flex-col flex-1">
-                        <div class="mb-3">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${prod.category}</span>
-                            <h3 class="text-lg font-bold text-white leading-tight mt-1 group-hover:text-[#39ff14] transition-colors line-clamp-2">
-                                <a href="product.html?id=${prod.id}">${prod.name}</a>
-                            </h3>
+                    <div class="p-5">
+                        <h3 class="text-white font-bold text-lg mb-2 truncate group-hover:text-[#39ff14] transition-colors">
+                            <a href="product.html?id=${prod.id}">${prod.name}</a>
+                        </h3>
+                        <p class="text-gray-500 text-xs mb-4 line-clamp-2 h-8">${prod.description || 'Premium hardware for enthusiasts.'}</p>
+                        <div class="flex items-center justify-between mb-2">
+                             ${priceDisplay}
+                             <span class="text-xs text-gray-500 font-mono">Stock: ${prod.stock !== undefined ? prod.stock : 'Unknown'}</span>
                         </div>
-                        <div class="mt-auto flex items-end justify-between">
-                            <div>
-                                <span class="block text-2xl font-black text-[#39ff14]">$${prod.price}</span>
-                            </div>
-                            <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
-                                class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-[#39ff14] hover:text-black transition-all shadow-lg group-active:scale-95" 
-                                ${prod.stock === 0 ? 'disabled' : ''}>
-                                <i class="fas fa-cart-plus"></i>
-                            </button>
-                        </div>
+                        ${btnHtml}
                     </div>
                 </div>
             `;
@@ -2497,14 +2496,29 @@ window.renderSearchResults = function () {
     }
 
     searchResults.forEach(prod => {
-        // Reuse Card Generation Logic?
-        // It's long. I'll just use a Grid Card Only for now to save space, or copy full.
-        // Copying full logic for consistency.
+        const isOutOfStock = (prod.stock !== undefined && prod.stock <= 0);
+
+        // Ribbon
+        const ribbon = isOutOfStock ?
+            `<div class="absolute top-6 left-[-45px] w-[170px] bg-red-600 text-white text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-red-800">Not Available</div>`
+            : '';
+
+        // Button
+        const btnHtml = isOutOfStock ?
+            `<button disabled class="w-full bg-gray-800 text-gray-500 border border-gray-700 font-bold py-3 mt-4 rounded cursor-not-allowed uppercase tracking-wider text-xs hover:bg-gray-800">Sold Out</button>` :
+            `<button onclick="window.addToCartFromCard('${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${prod.price}, '${prod.image_url}', this)" 
+                class="w-full bg-[#39ff14] text-black font-bold py-3 mt-4 rounded hover:bg-[#32cc11] transition-transform active:scale-95 shadow-[0_0_15px_rgba(57,255,20,0.4)] uppercase tracking-wider text-sm flex items-center justify-center gap-2 group-hover:shadow-[0_0_25px_rgba(57,255,20,0.6)]">
+                <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>`;
+
+        // Price styling
+        const priceDisplay = isOutOfStock ?
+            `<span class="text-red-500 font-bold uppercase text-sm">Out of Stock</span>` :
+            `<span class="text-[#39ff14] font-black text-xl">$${prod.price.toFixed(2)}</span>`;
 
         let cardHTML = '';
         const isList = searchViewMode === 'list';
 
-        // ... (Using the same card template as top of file) ...
         if (isList) {
             // LIST ITEM
             cardHTML = `
