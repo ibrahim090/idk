@@ -52,6 +52,104 @@ window.seedCategories = async () => {
     }
 };
 
+// --- TEMP: Seed White PC ---
+window.seedWhitePC = async () => {
+    if (!confirm("Add 'White Aesthetic Gaming PC' products to inventory?")) return;
+
+    const products = [
+        {
+            name: "AMD Ryzen 5 7600",
+            price: 229,
+            stock: 10,
+            category: "cpu",
+            socket: "AM5",
+            image_url: "https://m.media-amazon.com/images/I/51f2hk81eGL._AC_SL1000_.jpg",
+            description: "6-Core, 12-Thread Unlocked Desktop Processor",
+            specs: ["AM5 Socket", "Max Boost 5.1GHz", "65W TDP"]
+        },
+        {
+            name: "ASUS ROG Strix B650-A Gaming WiFi",
+            price: 219,
+            stock: 5,
+            category: "motherboard",
+            socket: "AM5",
+            image_url: "https://m.media-amazon.com/images/I/81M6bm6VaaL._AC_SL1500_.jpg",
+            description: "White themed AM5 Motherboard with WiFi 6E",
+            specs: ["AM5 Socket", "DDR5 Support", "White PCB Accents"]
+        },
+        {
+            name: "Corsair Vengeance RGB DDR5 32GB White",
+            price: 129,
+            stock: 20,
+            category: "ram",
+            image_url: "https://m.media-amazon.com/images/I/61+7w+1yjlL._AC_SL1500_.jpg",
+            description: "32GB (2x16GB) DDR5 6000MHz C36 Memory Kit - White",
+            specs: ["DDR5", "6000MHz", "RGB Lighting", "White Heatspreader"]
+        },
+        {
+            name: "Gigabyte GeForce RTX 4060 Ti Aero OC",
+            price: 399,
+            stock: 8,
+            category: "gpu",
+            image_url: "https://m.media-amazon.com/images/I/71Y-3i-kLTL._AC_SL1500_.jpg",
+            description: "8GB GDDR6, 128-bit, White Graphics Card",
+            specs: ["8GB VRAM", "White Design", "Triple Fan"]
+        },
+        {
+            name: "WD_BLACK SN770 1TB NVMe Gen4",
+            price: 79,
+            stock: 15,
+            category: "storage",
+            image_url: "https://m.media-amazon.com/images/I/614-727c6pL._AC_SL1500_.jpg",
+            description: "High performance Gen4 PCIe M.2 SSD",
+            specs: ["1TB", "Gen4", "Up to 5150 MB/s"]
+        },
+        {
+            name: "Corsair RM750 White 80+ Gold",
+            price: 109,
+            stock: 10,
+            category: "psu",
+            image_url: "https://m.media-amazon.com/images/I/71c6w5tXf8L._AC_SL1500_.jpg",
+            description: "Fully Modular White Power Supply",
+            specs: ["750W", "80+ Gold", "White Cables Included"]
+        },
+        {
+            name: "NZXT H5 Flow RGB White",
+            price: 119,
+            stock: 12,
+            category: "case",
+            image_url: "https://m.media-amazon.com/images/I/61q3kM0A2LL._AC_SL1500_.jpg",
+            description: "Compact Mid-Tower Airflow Case with RGB Fans",
+            specs: ["ATX Support", "White", "Tempered Glass"]
+        }
+    ];
+
+    const batch = db.batch();
+
+    // Check if 'storage' or 'psu' or 'case' categories exist? 
+    // Usually we should seed categories too if missing, but let's assume they might exist or the builder handles it.
+    // The previous category seed didn't include 'storage', 'psu', 'case'. Let's add them quickly locally or safeguard.
+    // I'll just add the products. Users might need to add the categories to see them in 'inventory list' filter if it relies on strict cats,
+    // but the builder queries by string so it's fine.
+
+    products.forEach(p => {
+        const ref = db.collection('products').doc(); // Auto ID
+        batch.set(ref, {
+            ...p,
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    });
+
+    try {
+        await batch.commit();
+        alert("Success! White PC parts added.");
+        if (window.loadAdminInventory) window.loadAdminInventory();
+    } catch (e) {
+        console.error(e);
+        alert("Error seeding: " + e.message);
+    }
+};
+
 // --- CORE FUNCTIONS ---
 
 // DOMContentLoaded wrapper
@@ -134,6 +232,7 @@ function initAdmin() {
             const price = parseFloat(document.getElementById('p-price').value);
             const stock = parseInt(document.getElementById('p-stock').value) || 0;
             const category = document.getElementById('p-category').value;
+            const socket = document.getElementById('p-socket').value.trim(); // Capture Socket
             const desc = document.getElementById('p-desc').value;
             const specsRaw = document.getElementById('p-specs') ? document.getElementById('p-specs').value : '';
             const specs = specsRaw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
@@ -160,6 +259,7 @@ function initAdmin() {
                 price,
                 stock,
                 category,
+                socket: socket, // Save Socket
                 description: desc,
                 specs: specs,
                 image_url: mainImage, // Backward compatibility
@@ -169,6 +269,7 @@ function initAdmin() {
                 alert("Product added successfully!");
                 addForm.reset();
                 document.getElementById('p-stock').value = 1;
+                if (document.getElementById('p-socket')) document.getElementById('p-socket').value = ''; // Reset Socket
                 // Reset Image Inputs
                 const imgContainer = document.getElementById('image-inputs-container');
                 if (imgContainer) {
@@ -1073,10 +1174,27 @@ function loadLatestArrivals() {
     }
 
     // Default Latest
-    query.orderBy("created_at", "desc").limit(8).get().then(snap => {
+    query.orderBy("created_at", "desc").limit(10).get().then(snap => {
         let products = [];
         snap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+
+        const hasMore = products.length > 9;
+        if (hasMore) {
+            products = products.slice(0, 9);
+        }
+
         renderGrid(products, container);
+
+        if (hasMore) {
+            const btnHtml = `
+                <div class="col-span-full flex justify-center mt-8">
+                    <a href="search.html?view=all&sort=latest" class="bg-gray-900 border border-[#39ff14] text-[#39ff14] px-8 py-3 rounded-full font-bold uppercase tracking-widest hover:bg-[#39ff14] hover:text-black transition-all shadow-[0_0_20px_rgba(57,255,20,0.2)]">
+                        Show All Latest Arrivals
+                    </a>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', btnHtml);
+        }
     }).catch(e => {
         console.error("Load Latest Error:", e);
         container.innerHTML = '<p class="text-center text-red-500">Error loading products.</p>';
@@ -1157,7 +1275,7 @@ function renderGrid(products, container) {
         return `
         <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
             ${isOutOfStock ? `<div class="absolute top-6 left-[-45px] w-[170px] bg-[#39ff14] text-black text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-[#32cc11]">Not Available</div>` : ''}
-            <a href="product.html?id=${product.id}" class="block relative h-48 overflow-hidden bg-black cursor-pointer">
+            <a href="product.html?id=${product.id}" class="block relative aspect-square overflow-hidden bg-black cursor-pointer">
                 <img src="${product.image_url}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
             </a>
             <div class="p-5 flex-1 flex flex-col">
@@ -1250,9 +1368,14 @@ function loadDynamicSections(typeFilter, containerId) {
             // 2. Main Section HTML
             const sectionHTML = `
                 <section id="${sectionId}" class="scroll-mt-24">
-                    <div class="flex items-center space-x-4 mb-6 border-b border-gray-800 pb-2">
-                        <i class="${cat.icon} text-3xl" style="color: ${cat.color}"></i>
-                        <h2 class="text-2xl font-black text-white uppercase tracking-wider">${cat.name}</h2>
+                    <div class="flex items-center justify-between mb-6 border-b border-gray-800 pb-2">
+                        <div class="flex items-center space-x-4">
+                            <i class="${cat.icon} text-3xl" style="color: ${cat.color}"></i>
+                            <h2 class="text-2xl font-black text-white uppercase tracking-wider">${cat.name}</h2>
+                        </div>
+                        <a href="category.html?id=${cat.id}" class="text-sm font-bold text-gray-500 hover:text-[#39ff14] uppercase tracking-wide transition-colors flex items-center gap-2 group">
+                            Show All <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+                        </a>
                     </div>
                     <div id="${gridId}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                         <div class="col-span-full text-center text-gray-500 py-10">Loading products...</div>
@@ -1364,13 +1487,18 @@ function loadProductDetails() {
                         <div class="py-4">
                             <ul class="space-y-2">
                                 ${specs.map(s => {
-                const parts = s.split(':');
+                const match = s.match(/^([^:;]+)([:;])(.*)$/);
                 let content = s;
-                if (parts.length > 1) {
-                    content = `<span class="text-white font-bold">${parts[0]}:</span> <span class="text-gray-400">${parts.slice(1).join(':')}</span>`;
+
+                if (match) {
+                    const label = match[1];
+                    const sep = match[2];
+                    const val = match[3];
+                    content = `<span class="text-white font-bold">${label}${sep}</span><span class="text-gray-400">${val}</span>`;
                 } else {
                     content = `<span class="text-gray-300">${s}</span>`;
                 }
+
                 return `
                                     <li class="flex items-start text-sm">
                                         <i class="fas fa-circle text-[#39ff14] text-[6px] mt-2 mr-3 shrink-0"></i>
@@ -1383,15 +1511,31 @@ function loadProductDetails() {
                     ` : ''}
 
                     <!-- Add to Cart -->
-                     <div class="pt-4 mt-auto">
-                        ${isOutOfStock ?
-                `<button disabled class="w-full bg-gray-800 text-gray-500 border border-gray-700 font-bold py-4 rounded cursor-not-allowed uppercase tracking-wider text-sm">Product Unavailable</button>` :
-                `<button onclick="window.addToCart({ id: '${doc.id}', name: '${p.name.replace(/'/g, "\\'")}', price: ${p.price}, image_url: '${mainImg}', stock: ${stock} }, 1, this)" 
-                            class="w-full bg-[#39ff14] text-black font-black py-4 rounded hover:bg-[#32cc11] transition-all shadow-[0_0_20px_rgba(57,255,20,0.4)] uppercase tracking-wider text-lg flex items-center justify-center gap-3">
-                        <i class="fas fa-shopping-cart"></i> Add to Cart
-                    </button>`
-            }
-                         <div class="flex items-center gap-6 mt-6 text-xs text-gray-500 uppercase font-bold tracking-wide justify-center">
+                     <!-- Add to Cart & Actions -->
+                     <div class="pt-6 mt-auto">
+                        <div class="flex gap-4 h-14">
+                             ${!isOutOfStock ? `
+                             <!-- Quantity Selector -->
+                             <div class="flex items-center bg-black border border-gray-800 rounded-lg overflow-hidden shrink-0">
+                                 <button onclick="const q=document.getElementById('detail-qty'); if(q.value>1) q.value--" class="w-12 h-full text-gray-400 hover:text-white hover:bg-gray-900 transition-colors font-bold text-xl flex items-center justify-center">-</button>
+                                 <input type="number" id="detail-qty" value="1" min="1" max="${stock}" class="bg-transparent w-12 text-center text-white font-bold text-xl outline-none appearance-none" readonly>
+                                 <button onclick="const q=document.getElementById('detail-qty'); if(q.value<${stock}) q.value++" class="w-12 h-full text-gray-400 hover:text-white hover:bg-gray-900 transition-colors font-bold text-xl flex items-center justify-center">+</button>
+                             </div>
+                             
+                             <!-- Add Button -->
+                             <button onclick="window.addToCart({ id: '${doc.id}', name: '${p.name.replace(/'/g, "\\'")}', price: ${p.price}, image_url: '${mainImg}', stock: ${stock} }, parseInt(document.getElementById('detail-qty').value), this)" 
+                                class="flex-1 bg-[#39ff14] text-black font-black uppercase tracking-widest text-xl rounded-lg hover:bg-[#32cc11] transition-all shadow-[0_0_25px_rgba(57,255,20,0.4)] flex items-center justify-center gap-3 hover:scale-[1.02]">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                             </button>
+                             ` : `
+                             <!-- Out of Stock -->
+                             <button disabled class="w-full h-full bg-gray-900 text-gray-500 border border-gray-800 font-bold uppercase tracking-widest text-lg rounded-lg cursor-not-allowed flex items-center justify-center">
+                                Product Unavailable
+                             </button>
+                             `}
+                        </div>
+
+                         <div class="flex items-center gap-8 mt-8 text-sm text-gray-500 uppercase font-bold tracking-wide justify-center">
                              <div class="flex items-center"><i class="fas fa-shield-alt mr-2 text-white"></i> Official Warranty</div>
                              <div class="flex items-center"><i class="fas fa-truck mr-2 text-white"></i> Fast Delivery</div>
                          </div>
@@ -1404,7 +1548,13 @@ function loadProductDetails() {
                  <div>
                      <h2 class="text-3xl font-black text-white italic mb-8 border-l-4 border-[#39ff14] pl-4">Product Description</h2>
                      <div class="prose prose-invert prose-lg text-gray-400 leading-relaxed max-w-4xl">
-                         <p class="whitespace-pre-line">${p.description || "No detailed description available."}</p>
+                         <p>${(p.description || "No detailed description available.").split('\n').map(line => {
+                const match = line.match(/^([^:;]+)([:;])(.*)$/);
+                if (match) {
+                    return `<span class="text-white font-bold">${match[1]}${match[2]}</span><span>${match[3]}</span>`;
+                }
+                return line;
+            }).join('<br>')}</p>
                      </div>
                      <p class="text-xs text-gray-700 mt-12 font-mono">SKU ID: ${doc.id}</p>
                  </div>
@@ -1941,7 +2091,8 @@ if (window.location.pathname.includes('search.html')) {
    ============================ */
 
 window.toggleNavType = () => {
-    const type = document.getElementById('n-type').value;
+    const typeEl = document.getElementById('n-type');
+    const type = typeEl ? typeEl.value : '';
     const catContainer = document.getElementById('n-cat-container');
     const urlContainer = document.getElementById('n-url-container');
 
@@ -2038,7 +2189,8 @@ const addNavForm = document.getElementById('add-nav-form');
 if (addNavForm) {
     addNavForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const label = document.getElementById('n-label').value;
+        const labelEl = document.getElementById('n-label');
+        const label = labelEl ? labelEl.value : '';
         if (!label) return;
 
         // Generate Slug
@@ -2104,9 +2256,10 @@ window.renderGlobalNavigation = () => {
                 categoriesByType[c.type].push({ id: doc.id, ...c });
             });
 
-            // 2. Define standard links (Just Home)
+            // 2. Define standard links
             const links = [
-                { label: 'Home', url: 'index.html' }
+                { label: 'Home', url: 'index.html' },
+                { label: 'Custom PC Builder', url: 'builder.html' }
             ];
 
             // 3. Add dynamic links
@@ -2170,7 +2323,64 @@ window.renderGlobalNavigation = () => {
     });
 };
 
-document.addEventListener('DOMContentLoaded', renderGlobalNavigation);
+// 7. Inject Mobile Bottom Nav
+window.injectMobileNav = () => {
+    if (document.getElementById('mobile-bottom-nav')) return;
+
+    const nav = document.createElement('div');
+    nav.id = 'mobile-bottom-nav';
+    nav.className = "md:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur-lg border-t border-[#39ff14]/30 pb-[env(safe-area-inset-bottom)] padding-bottom: var(--safe-area-bottom)";
+    nav.innerHTML = `
+        <div class="flex justify-around items-center h-16 px-2">
+            <a href="index.html" class="flex flex-col items-center justify-center text-gray-400 hover:text-[#39ff14] active:text-[#39ff14] transition-colors w-full h-full">
+                <i class="fas fa-home text-xl mb-1"></i>
+                <span class="text-[10px] font-bold uppercase">Home</span>
+            </a>
+            <a href="search.html" class="flex flex-col items-center justify-center text-gray-400 hover:text-[#39ff14] active:text-[#39ff14] transition-colors w-full h-full">
+                <i class="fas fa-search text-xl mb-1"></i>
+                <span class="text-[10px] font-bold uppercase">Search</span>
+            </a>
+            <div class="relative flex flex-col items-center justify-center text-gray-400 hover:text-[#39ff14] active:text-[#39ff14] transition-colors w-full h-full cursor-pointer" onclick="window.toggleCart()">
+                <div class="relative">
+                    <i class="fas fa-shopping-cart text-xl mb-1"></i>
+                    <span id="mobile-cart-count" class="absolute -top-2 -right-2 bg-[#ff00ff] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-black">0</span>
+                </div>
+                <span class="text-[10px] font-bold uppercase">Cart</span>
+            </div>
+            <a href="admin.html" class="flex flex-col items-center justify-center text-gray-400 hover:text-[#39ff14] active:text-[#39ff14] transition-colors w-full h-full">
+                <i class="fas fa-user-shield text-xl mb-1"></i>
+                <span class="text-[10px] font-bold uppercase">Admin</span>
+            </a>
+        </div>
+    `;
+    document.body.appendChild(nav);
+
+    // Sync Cart Count
+    const updateMobileCount = () => {
+        const desktopCnt = document.getElementById('cart-count');
+        const mobileCnt = document.getElementById('mobile-cart-count');
+        if (desktopCnt && mobileCnt) mobileCnt.innerText = desktopCnt.innerText;
+    };
+
+    // Initial Sync
+    setTimeout(updateMobileCount, 1000);
+
+    // Observe changes to desktop cart count to sync mobile
+    const deskCount = document.getElementById('cart-count');
+    if (deskCount) {
+        const observer = new MutationObserver(updateMobileCount);
+        observer.observe(deskCount, { childList: true, subtree: true, characterData: true });
+    }
+
+    // Add padding to body so content isn't hidden behind nav
+    document.body.style.paddingBottom = "80px";
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Only run if not already running (firebase-config might trigger)
+    renderGlobalNavigation();
+    injectMobileNav();
+});
 
 // Load Page Types into "Add Category" Dropdown
 window.loadPageTypes = () => {
@@ -2625,7 +2835,7 @@ window.renderSearchResults = function () {
     if (searchViewMode === 'list') {
         container.className = "flex flex-col gap-4";
     } else {
-        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+        container.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
     }
 
     searchResults.forEach(prod => {
