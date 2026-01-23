@@ -100,21 +100,23 @@ function initAdmin() {
     // 1. PIN Security
     if (loginBtn) {
         loginBtn.addEventListener('click', () => {
-            const pin = pinInput.value;
-            // Hardcoded Simple PIN for demo
-            if (pin === "1234") {
-                authSection.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
-                dashboardSection.classList.remove('hidden');
-                loadAdminInventory();
-                loadAdminBanners();
-                loadAdminCategories(); // Load categories
-                loadAdminNavigation(); // Load navigation menu
-                loadPageTypes(); // Load dynamic types for dropdown
-                loadAdminOrders(); // Load Orders
-            } else {
-                authError.textContent = "Access Denied: Invalid PIN";
-                authError.classList.remove('hidden');
+            if (pinInput) {
+                const pin = pinInput.value;
+                // Hardcoded Simple PIN for demo
+                if (pin === "1234") {
+                    authSection.classList.add('hidden');
+                    dashboardSection.classList.remove('hidden');
+                    dashboardSection.classList.remove('hidden');
+                    loadAdminInventory();
+                    loadAdminBanners();
+                    loadAdminCategories(); // Load categories
+                    loadAdminNavigation(); // Load navigation menu
+                    loadPageTypes(); // Load dynamic types for dropdown
+                    loadAdminOrders(); // Load Orders
+                } else {
+                    authError.textContent = "Access Denied: Invalid PIN";
+                    authError.classList.remove('hidden');
+                }
             }
         });
     }
@@ -133,6 +135,8 @@ function initAdmin() {
             const stock = parseInt(document.getElementById('p-stock').value) || 0;
             const category = document.getElementById('p-category').value;
             const desc = document.getElementById('p-desc').value;
+            const specsRaw = document.getElementById('p-specs') ? document.getElementById('p-specs').value : '';
+            const specs = specsRaw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
 
             // Multi-Image Logic
             const imageInputs = document.querySelectorAll('.product-image-input');
@@ -157,6 +161,7 @@ function initAdmin() {
                 stock,
                 category,
                 description: desc,
+                specs: specs,
                 image_url: mainImage, // Backward compatibility
                 images: images,       // New Array
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
@@ -1317,76 +1322,92 @@ function loadProductDetails() {
         if (crumbCat && p.category) crumbCat.innerText = p.category;
 
         container.classList.remove('grid-cols-1', 'md:grid-cols-2'); // Reset classes if needed, but we replace content
-        container.className = "grid grid-cols-1 lg:grid-cols-2 gap-12 items-start"; // Enforce layout
+        // Short Specs Logic
+        const specs = p.specs || [];
 
         container.innerHTML = `
-            <!-- Gallery Section -->
-            <div class="flex gap-4 md:gap-6 order-1">
-                 <!-- Thumbnails (Vertical) -->
-                 <div class="flex flex-col gap-3 w-16 md:w-20 shrink-0">
-                     ${images.map((img, i) => `
-                         <div class="aspect-square rounded-lg border ${i === 0 ? 'border-[#39ff14]' : 'border-gray-800'} overflow-hidden cursor-pointer hover:border-[#39ff14] transition-all bg-black" 
-                              onmouseover="window.changeMainImage('${img}', this)" onclick="window.changeMainImage('${img}', this)">
-                             <img src="${img}" class="w-full h-full object-cover">
-                         </div>
-                     `).join('')}
-                 </div>
-                 
-                 <!-- Main Image -->
-                 <div class="flex-1 bg-black rounded-xl border border-gray-800 p-2 relative group overflow-hidden flex items-center justify-center aspect-[4/5] md:aspect-square">
-                     <img id="main-product-image" src="${mainImg}" class="w-full h-full object-contain max-h-[600px] rounded-lg transform transition-transform duration-500 hover:scale-105">
-                 </div>
-            </div>
+            <!-- Top Section: Gallery & Quick Info -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-20">
+                <!-- Gallery (Left) -->
+                <div class="flex gap-4 md:gap-6">
+                     <!-- Thumbnails -->
+                     <div class="flex flex-col gap-3 w-16 md:w-20 shrink-0">
+                         ${images.map((img, i) => `
+                             <div class="aspect-square rounded-lg border ${i === 0 ? 'border-[#39ff14]' : 'border-gray-800'} overflow-hidden cursor-pointer hover:border-[#39ff14] transition-all bg-black" 
+                                  onmouseover="window.changeMainImage('${img}', this)" onclick="window.changeMainImage('${img}', this)">
+                                 <img src="${img}" class="w-full h-full object-cover">
+                             </div>
+                         `).join('')}
+                     </div>
+                     <!-- Main Image -->
+                     <div class="flex-1 bg-black rounded-xl border border-gray-800 p-2 relative group overflow-hidden flex items-center justify-center aspect-[4/5] md:aspect-square">
+                         <img id="main-product-image" src="${mainImg}" class="w-full h-full object-contain max-h-[600px] rounded-lg transform transition-transform duration-500 hover:scale-105">
+                     </div>
+                </div>
 
-            <!-- Info Section -->
-            <div class="flex flex-col order-2 space-y-6 pt-2">
-                <div>
-                    <span class="text-[#39ff14] font-bold text-sm uppercase tracking-widest mb-2 block">${p.category}</span>
-                    <h1 class="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">${p.name}</h1>
-                    <div class="flex items-center gap-4">
-                        <div class="text-3xl text-white font-bold font-mono">$${p.price}</div>
-                        ${isOutOfStock ?
+                <!-- Info (Right) -->
+                <div class="flex flex-col space-y-6 pt-2">
+                    <div>
+                        <span class="text-[#39ff14] font-bold text-sm uppercase tracking-widest mb-2 block">${p.category}</span>
+                        <h1 class="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">${p.name}</h1>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="text-3xl text-white font-bold font-mono">$${p.price}</div>
+                            ${isOutOfStock ?
                 `<span class="bg-red-500/20 text-red-500 border border-red-500/50 text-xs font-bold px-2 py-1 rounded uppercase">Out of Stock</span>` :
                 `<span class="bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/50 text-xs font-bold px-2 py-1 rounded uppercase">In Stock: ${stock}</span>`
             }
+                        </div>
                     </div>
-                </div>
 
-                <div class="prose prose-invert text-gray-400 text-sm leading-relaxed border-t border-gray-800 pt-6">
-                    <p>${p.description || "No description provided for this premium product."}</p>
-                    <p class="text-xs text-gray-600 mt-2">SKU: ${doc.id.substring(0, 8).toUpperCase()}</p>
-                </div>
+                    <!-- Short Specs / Main Details -->
+                    ${specs.length > 0 ? `
+                        <div class="py-4">
+                            <ul class="space-y-2">
+                                ${specs.map(s => {
+                const parts = s.split(':');
+                let content = s;
+                if (parts.length > 1) {
+                    content = `<span class="text-white font-bold">${parts[0]}:</span> <span class="text-gray-400">${parts.slice(1).join(':')}</span>`;
+                } else {
+                    content = `<span class="text-gray-300">${s}</span>`;
+                }
+                return `
+                                    <li class="flex items-start text-sm">
+                                        <i class="fas fa-circle text-[#39ff14] text-[6px] mt-2 mr-3 shrink-0"></i>
+                                        <span>${content}</span>
+                                    </li>
+                                    `;
+            }).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
 
-                <div class="border-t border-gray-800 pt-8 mt-auto">
-                     <div class="flex items-center gap-6 mb-8">
-                         <div class="flex items-center text-white">
-                             <i class="fas fa-check-circle mr-3 text-[#39ff14]"></i>
-                             <span class="font-bold text-sm uppercase tracking-wide">In Stock</span>
-                         </div>
-                         <div class="flex items-center text-gray-400">
-                             <i class="fas fa-shield-alt mr-3"></i>
-                             <span class="font-bold text-sm uppercase tracking-wide">Official Warranty</span>
+                    <!-- Add to Cart -->
+                     <div class="pt-4 mt-auto">
+                        ${isOutOfStock ?
+                `<button disabled class="w-full bg-gray-800 text-gray-500 border border-gray-700 font-bold py-4 rounded cursor-not-allowed uppercase tracking-wider text-sm">Product Unavailable</button>` :
+                `<button onclick="window.addToCart({ id: '${doc.id}', name: '${p.name.replace(/'/g, "\\'")}', price: ${p.price}, image_url: '${mainImg}', stock: ${stock} }, 1, this)" 
+                            class="w-full bg-[#39ff14] text-black font-black py-4 rounded hover:bg-[#32cc11] transition-all shadow-[0_0_20px_rgba(57,255,20,0.4)] uppercase tracking-wider text-lg flex items-center justify-center gap-3">
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </button>`
+            }
+                         <div class="flex items-center gap-6 mt-6 text-xs text-gray-500 uppercase font-bold tracking-wide justify-center">
+                             <div class="flex items-center"><i class="fas fa-shield-alt mr-2 text-white"></i> Official Warranty</div>
+                             <div class="flex items-center"><i class="fas fa-truck mr-2 text-white"></i> Fast Delivery</div>
                          </div>
                      </div>
-                     
-                     <div class="flex gap-4">
-                         ${!isOutOfStock ? `
-                         <div class="flex items-center bg-gray-900 border border-gray-700 rounded-xl">
-                             <button onclick="const qty=document.getElementById('detail-qty'); if(qty.value>1) qty.value--" class="px-4 py-3 text-gray-400 hover:text-white transition-colors">-</button>
-                             <input type="number" id="detail-qty" value="1" min="1" max="${stock}" class="bg-transparent w-12 text-center text-white font-bold outline-none" readonly>
-                             <button onclick="const qty=document.getElementById('detail-qty'); if(qty.value<${stock}) qty.value++" class="px-4 py-3 text-gray-400 hover:text-white transition-colors">+</button>
-                         </div>
-                         <button onclick="window.addToCart({id:'${doc.id}', name:'${p.name.replace(/'/g, "\\'")}', price:${p.price}, image_url:'${mainImg}', stock:${stock}}, parseInt(document.getElementById('detail-qty').value), this)" 
-                            class="flex-1 py-4 bg-[#39ff14] hover:bg-[#32cc11] text-black font-black uppercase tracking-widest text-lg rounded-xl shadow-[0_0_20px_rgba(57,255,20,0.3)] hover:shadow-[0_0_40px_rgba(57,255,20,0.6)] transition-all transform active:scale-95 flex items-center justify-center gap-3">
-                            <i class="fas fa-shopping-cart"></i> Add to Cart
-                         </button>
-                         ` : `
-                         <button disabled class="w-full py-4 bg-gray-800 text-gray-500 font-bold uppercase tracking-widest text-lg rounded-xl cursor-not-allowed">
-                            Sold Out
-                         </button>
-                         `}
-                     </div>
                 </div>
+            </div>
+
+            <!-- Bottom Section: Full Description & Details -->
+            <div class="border-t border-gray-800 pt-16">
+                 <div>
+                     <h2 class="text-3xl font-black text-white italic mb-8 border-l-4 border-[#39ff14] pl-4">Product Description</h2>
+                     <div class="prose prose-invert prose-lg text-gray-400 leading-relaxed max-w-4xl">
+                         <p class="whitespace-pre-line">${p.description || "No detailed description available."}</p>
+                     </div>
+                     <p class="text-xs text-gray-700 mt-12 font-mono">SKU ID: ${doc.id}</p>
+                 </div>
             </div>
         `;
 
