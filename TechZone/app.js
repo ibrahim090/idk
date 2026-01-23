@@ -1,6 +1,5 @@
 // Initialize Firebase (Compat) - ONLINE MODE
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// firebaseConfig loaded from firebase-config.js
 
 // State
 const STATE = {
@@ -66,6 +65,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ============================
+   STOREFRONT LOGIC
+   ============================ */
+function initStorefront() {
+    console.log("Initializing Storefront...");
+
+    // 1. Global Components
+    if (typeof renderGlobalNavigation === 'function') renderGlobalNavigation();
+    if (typeof setupCartModal === 'function') setupCartModal();
+
+    // 2. Page Specifics
+    const path = window.location.pathname;
+
+    if ((path.includes('index.html') || path.endsWith('/')) && !path.includes('admin')) {
+        if (typeof initCarousel === 'function') initCarousel();
+    }
+
+    if (path.includes('product.html')) {
+        loadProductDetails();
+    }
+}
+
+/* ============================
    ADMIN PANEL LOGIC
    ============================ */
 function initAdmin() {
@@ -111,8 +132,17 @@ function initAdmin() {
             const price = parseFloat(document.getElementById('p-price').value);
             const stock = parseInt(document.getElementById('p-stock').value) || 0;
             const category = document.getElementById('p-category').value;
-            const desc = document.getElementById('p-desc').value; // NEW: description
-            let image = document.getElementById('p-image').value;
+            const desc = document.getElementById('p-desc').value;
+
+            // Multi-Image Logic
+            const imageInputs = document.querySelectorAll('.product-image-input');
+            const images = Array.from(imageInputs).map(input => input.value.trim()).filter(val => val !== '');
+
+            // Fallback / Placeholder
+            if (images.length === 0) {
+                images.push("https://placehold.co/400x300/000000/39ff14?text=No+Image");
+            }
+            const mainImage = images[0];
 
             if (!category) {
                 alert("Please select a category.");
@@ -121,27 +151,33 @@ function initAdmin() {
                 return;
             }
 
-            // Use generic placeholder if empty
-            if (!image) {
-                image = "https://placehold.co/400x300/000000/39ff14?text=No+Image";
-            }
-
             db.collection("products").add({
                 name,
                 price,
                 stock,
                 category,
-                description: desc, // Save description
-                image_url: image,
+                description: desc,
+                image_url: mainImage, // Backward compatibility
+                images: images,       // New Array
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 alert("Product added successfully!");
                 addForm.reset();
-                document.getElementById('p-stock').value = 1; // Reset stock default
-                loadAdminInventory(); // Refresh list
+                document.getElementById('p-stock').value = 1;
+                // Reset Image Inputs
+                const imgContainer = document.getElementById('image-inputs-container');
+                if (imgContainer) {
+                    imgContainer.innerHTML = `
+                        <div class="flex gap-2">
+                             <input type="text" class="product-image-input w-full bg-black border border-gray-800 p-2 rounded focus:border-[#00f3ff] outline-none text-sm text-white font-mono" placeholder="Image URL..." required>
+                             <button type="button" class="text-red-500 px-2 opacity-50 cursor-not-allowed"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                }
+                loadAdminInventory();
             }).catch((error) => {
                 console.error("Error adding document: ", error);
-                alert("Error adding product: " + error.message + "\n\nCHECK YOUR API KEYS in firebase-config.js");
+                alert("Error adding product: " + error.message);
             }).finally(() => {
                 btn.textContent = originalText;
                 btn.disabled = false;
@@ -398,6 +434,19 @@ window.updateProductStock = (id, newStock) => {
 };
 
 // Global scope for onclick access
+// Helper for Admin Multi-Image
+window.addMoreImageInput = () => {
+    const container = document.getElementById('image-inputs-container');
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = "flex gap-2";
+    div.innerHTML = `
+        <input type="text" class="product-image-input w-full bg-black border border-gray-800 p-2 rounded focus:border-[#00f3ff] outline-none text-sm text-white font-mono" placeholder="Image URL...">
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-500 px-2 hover:text-white"><i class="fas fa-trash"></i></button>
+    `;
+    container.appendChild(div);
+};
+
 window.deleteProduct = (id) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
 
@@ -1224,92 +1273,128 @@ function loadDynamicSections(typeFilter, containerId) {
 /* ============================
    PRODUCT DETAIL LOGIC
    ============================ */
+// Helper to switch main image
+window.changeMainImage = (src, thumbEl) => {
+    const main = document.getElementById('main-product-image');
+    if (main) {
+        main.src = src;
+        // Update Active Thumb class
+        const thumbs = thumbEl.parentElement.children;
+        for (let t of thumbs) t.classList.remove('border-[#39ff14]');
+        thumbEl.classList.add('border-[#39ff14]');
+    }
+};
+
 function loadProductDetails() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
+    const container = document.getElementById('product-detail-container'); // Correct ID from product.html
 
-    if (!id) {
-        window.location.href = 'index.html';
+    if (!id || !container) {
+        // Fallback for not finding ID or Container
+        if (!id) window.location.href = 'index.html';
         return;
     }
 
-    const els = {
-        img: document.getElementById('detail-image'),
-        name: document.getElementById('detail-name'),
-        nameCrumb: document.getElementById('detail-name-crumb'),
-        cat: document.getElementById('detail-category'),
-        price: document.getElementById('detail-price'),
-        stock: document.getElementById('detail-stock'),
-        desc: document.getElementById('detail-desc'),
-        sku: document.getElementById('detail-sku'),
-        qty: document.getElementById('detail-qty'),
-        addBtn: document.getElementById('add-to-cart-btn')
-    };
-
-    if (!els.name) return; // Not on details page
-
     db.collection('products').doc(id).get().then(doc => {
         if (!doc.exists) {
-            els.name.innerText = "Product Not Found";
+            container.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500">Product not found.</div>';
             return;
         }
 
-        const data = doc.data();
-        const stock = data.stock || 0;
+        const p = doc.data();
+        const images = (p.images && p.images.length > 0) ? p.images : [p.image_url];
+        const mainImg = images[0];
+        const stock = p.stock || 0;
         const isOutOfStock = stock === 0;
 
-        // Render Data
-        if (els.img) els.img.src = data.image_url;
-        if (els.name) els.name.innerText = data.name;
-        if (els.nameCrumb) els.nameCrumb.innerText = data.name;
-        if (els.cat) els.cat.innerText = data.category;
-        if (els.price) els.price.innerText = `$${data.price}`;
-        if (els.stock && stock > 0) els.stock.textContent = `In Stock : ${stock} Only`;
-        if (els.desc) els.desc.innerText = data.description || "No description available for this product.";
-        if (els.sku) els.sku.innerText = `SKU: ${doc.id.substring(0, 8).toUpperCase()}`;
+        // Update Breadcrumb
+        const crumbName = document.getElementById('detail-name-crumb');
+        if (crumbName) crumbName.innerText = p.name;
 
-        // Stock Logic
-        if (isOutOfStock) {
-            if (els.addBtn) {
-                els.addBtn.disabled = true;
-                els.addBtn.innerText = "Currently Unavailable";
-                // Force styling for disabled state
-                els.addBtn.className = "w-full bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/50 font-bold py-4 rounded cursor-not-allowed uppercase tracking-wider shadow-none opacity-80";
+        // Update Category Breadcrumb if possible
+        const crumbCat = document.getElementById('detail-category');
+        if (crumbCat && p.category) crumbCat.innerText = p.category;
+
+        container.classList.remove('grid-cols-1', 'md:grid-cols-2'); // Reset classes if needed, but we replace content
+        container.className = "grid grid-cols-1 lg:grid-cols-2 gap-12 items-start"; // Enforce layout
+
+        container.innerHTML = `
+            <!-- Gallery Section -->
+            <div class="flex gap-4 md:gap-6 order-1">
+                 <!-- Thumbnails (Vertical) -->
+                 <div class="flex flex-col gap-3 w-16 md:w-20 shrink-0">
+                     ${images.map((img, i) => `
+                         <div class="aspect-square rounded-lg border ${i === 0 ? 'border-[#39ff14]' : 'border-gray-800'} overflow-hidden cursor-pointer hover:border-[#39ff14] transition-all bg-black" 
+                              onmouseover="window.changeMainImage('${img}', this)" onclick="window.changeMainImage('${img}', this)">
+                             <img src="${img}" class="w-full h-full object-cover">
+                         </div>
+                     `).join('')}
+                 </div>
+                 
+                 <!-- Main Image -->
+                 <div class="flex-1 bg-black rounded-xl border border-gray-800 p-2 relative group overflow-hidden flex items-center justify-center aspect-[4/5] md:aspect-square">
+                     <img id="main-product-image" src="${mainImg}" class="w-full h-full object-contain max-h-[600px] rounded-lg transform transition-transform duration-500 hover:scale-105">
+                 </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="flex flex-col order-2 space-y-6 pt-2">
+                <div>
+                    <span class="text-[#39ff14] font-bold text-sm uppercase tracking-widest mb-2 block">${p.category}</span>
+                    <h1 class="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">${p.name}</h1>
+                    <div class="flex items-center gap-4">
+                        <div class="text-3xl text-white font-bold font-mono">$${p.price}</div>
+                        ${isOutOfStock ?
+                `<span class="bg-red-500/20 text-red-500 border border-red-500/50 text-xs font-bold px-2 py-1 rounded uppercase">Out of Stock</span>` :
+                `<span class="bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/50 text-xs font-bold px-2 py-1 rounded uppercase">In Stock: ${stock}</span>`
             }
-            if (els.qty) els.qty.disabled = true;
-        } else {
-            // Add to Cart Action
-            if (els.addBtn) {
-                els.addBtn.onclick = () => {
-                    let qty = 1;
-                    if (els.qty) qty = parseInt(els.qty.value) || 1;
+                    </div>
+                </div>
 
-                    // Use new window.addToCart
-                    window.addToCart({
-                        id: doc.id,
-                        name: data.name,
-                        price: data.price,
-                        image_url: data.image_url,
-                        stock: stock
-                    }, qty, els.addBtn);
-                };
-            }
-        }
+                <div class="prose prose-invert text-gray-400 text-sm leading-relaxed border-t border-gray-800 pt-6">
+                    <p>${p.description || "No description provided for this premium product."}</p>
+                    <p class="text-xs text-gray-600 mt-2">SKU: ${doc.id.substring(0, 8).toUpperCase()}</p>
+                </div>
 
-        // Qty Handlers
-        window.increaseDetailQty = () => {
-            if (els.qty && els.qty.value < stock) els.qty.value++;
-        };
-        window.decreaseDetailQty = () => {
-            if (els.qty && els.qty.value > 1) els.qty.value--;
-        };
+                <div class="border-t border-gray-800 pt-8 mt-auto">
+                     <div class="flex items-center gap-6 mb-8">
+                         <div class="flex items-center text-white">
+                             <i class="fas fa-check-circle mr-3 text-[#39ff14]"></i>
+                             <span class="font-bold text-sm uppercase tracking-wide">In Stock</span>
+                         </div>
+                         <div class="flex items-center text-gray-400">
+                             <i class="fas fa-shield-alt mr-3"></i>
+                             <span class="font-bold text-sm uppercase tracking-wide">Official Warranty</span>
+                         </div>
+                     </div>
+                     
+                     <div class="flex gap-4">
+                         ${!isOutOfStock ? `
+                         <div class="flex items-center bg-gray-900 border border-gray-700 rounded-xl">
+                             <button onclick="const qty=document.getElementById('detail-qty'); if(qty.value>1) qty.value--" class="px-4 py-3 text-gray-400 hover:text-white transition-colors">-</button>
+                             <input type="number" id="detail-qty" value="1" min="1" max="${stock}" class="bg-transparent w-12 text-center text-white font-bold outline-none" readonly>
+                             <button onclick="const qty=document.getElementById('detail-qty'); if(qty.value<${stock}) qty.value++" class="px-4 py-3 text-gray-400 hover:text-white transition-colors">+</button>
+                         </div>
+                         <button onclick="window.addToCart({id:'${doc.id}', name:'${p.name.replace(/'/g, "\\'")}', price:${p.price}, image_url:'${mainImg}', stock:${stock}}, parseInt(document.getElementById('detail-qty').value), this)" 
+                            class="flex-1 py-4 bg-[#39ff14] hover:bg-[#32cc11] text-black font-black uppercase tracking-widest text-lg rounded-xl shadow-[0_0_20px_rgba(57,255,20,0.3)] hover:shadow-[0_0_40px_rgba(57,255,20,0.6)] transition-all transform active:scale-95 flex items-center justify-center gap-3">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                         </button>
+                         ` : `
+                         <button disabled class="w-full py-4 bg-gray-800 text-gray-500 font-bold uppercase tracking-widest text-lg rounded-xl cursor-not-allowed">
+                            Sold Out
+                         </button>
+                         `}
+                     </div>
+                </div>
+            </div>
+        `;
 
-        // Load Related Products
         loadRelatedProducts(doc.id);
 
     }).catch(e => {
         console.error("Detail Error", e);
-        if (els.name) els.name.innerText = "Error loading product.";
+        container.innerHTML = '<div class="col-span-full text-center text-red-500">Error loading product details.</div>';
     });
 }
 
@@ -1662,17 +1747,18 @@ window.toggleCart = function () {
 window.initSearchPage = function () {
     const params = new URLSearchParams(window.location.search);
     const query = params.get('q');
+    const view = params.get('view');
     const container = document.getElementById('search-results-container');
     const termDisplay = document.getElementById('search-term');
     const bgSearchInput = document.getElementById('search-input'); // The one in header
 
-    if (!query) {
+    if (!query && view !== 'all') {
         if (container) container.innerHTML = '<div class="col-span-full text-center text-gray-500">Please enter a search term.</div>';
         return;
     }
 
-    if (termDisplay) termDisplay.innerText = query;
-    if (bgSearchInput) bgSearchInput.value = query;
+    if (termDisplay) termDisplay.innerText = query || 'Latest Arrivals';
+    if (bgSearchInput && query) bgSearchInput.value = query;
 
     // Fetch ALL products (Client-side filtering mainly for simplicity)
     db.collection("products").get().then(snap => {
@@ -1680,8 +1766,9 @@ window.initSearchPage = function () {
         snap.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
 
         // Filter
-        const qLower = query.toLowerCase();
+        const qLower = query ? query.toLowerCase() : '';
         searchResults = allProducts.filter(p => {
+            if (view === 'all') return true;
             return p.name.toLowerCase().includes(qLower) ||
                 (p.description && p.description.toLowerCase().includes(qLower)) ||
                 (p.category && p.category.toLowerCase().includes(qLower));
@@ -1700,17 +1787,17 @@ window.initSearchPage = function () {
 };
 
 window.renderSearchResults = function () {
-    const container = document.getElementById('search-results-container');
-    if (!container) return;
+    const container = document.getElementById('search-results-container') || document.getElementById('product-container');
+    if (!container) return; // Prevent crash if neither exists
 
     container.innerHTML = "";
 
     if (searchResults.length === 0) {
         container.innerHTML = `
             <div class="col-span-full text-center py-20 flex flex-col items-center">
-                <i class="fas fa-search text-6xl text-gray-800 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-500 mb-2">No results found</h3>
-                <p class="text-gray-600">Try checking your spelling or use different keywords.</p>
+                 <i class="fas fa-box-open text-6xl text-gray-800 mb-6"></i>
+                 <h3 class="text-2xl font-bold text-gray-500 mb-2">No products found</h3>
+                 <p class="text-gray-600">Check back later for stock updates or try a different category.</p>
             </div>
         `;
         return;
@@ -1976,48 +2063,82 @@ window.seedStandardNavigation = async () => {
 };
 
 // Global Nav Renderer
+// Global Nav Renderer
 window.renderGlobalNavigation = () => {
     const navContainer = document.getElementById('dynamic-nav');
     if (!navContainer) return;
 
     // Seed on load (harmless if already exists)
     seedStandardNavigation().then(() => {
-        db.collection('navigation').orderBy('createdAt', 'asc').get().then(snap => {
-            // Define standard links (Just Home)
+        Promise.all([
+            db.collection('navigation').orderBy('createdAt', 'asc').get(),
+            db.collection('categories').get()
+        ]).then(([navSnap, catSnap]) => {
+            // 1. Process Categories
+            const categoriesByType = {};
+            catSnap.forEach(doc => {
+                const c = doc.data();
+                // Group by 'type' (e.g. laptop, component, accessory)
+                if (!categoriesByType[c.type]) categoriesByType[c.type] = [];
+                categoriesByType[c.type].push({ id: doc.id, ...c });
+            });
+
+            // 2. Define standard links (Just Home)
             const links = [
                 { label: 'Home', url: 'index.html' }
             ];
 
-            // Add dynamic links (Now includes Laptops, Components, Accessories)
-            snap.forEach(doc => {
+            // 3. Add dynamic links
+            navSnap.forEach(doc => {
                 links.push(doc.data());
             });
 
-            // Determine current page for highlighting
+            // 4. Render
             const currentPath = window.location.pathname;
-            const currentSearch = window.location.search;
-
             let html = '';
 
             links.forEach(link => {
                 let isActive = false;
-
-                // Check matching URL
                 if (link.url === 'index.html' && (currentPath.endsWith('index.html') || currentPath.endsWith('/'))) {
                     isActive = true;
                 } else if (currentPath.includes(link.url.split('?')[0])) {
-                    if (link.url.includes('?')) {
-                        if (currentSearch === link.url.substring(link.url.indexOf('?'))) {
-                            isActive = true;
-                        }
-                    } else {
-                        isActive = true;
-                    }
+                    isActive = true;
                 }
 
-                const activeClass = isActive ? 'text-[#39ff14] font-bold' : 'hover:text-white hover:bg-gray-800 text-gray-300';
+                // Check for Dropdown Data
+                const cats = link.type ? (categoriesByType[link.type] || []) : [];
 
-                html += `<a href="${link.url}" class="px-3 h-8 flex items-center rounded transition-all uppercase text-sm tracking-wider ${activeClass}">${link.label}</a>`;
+                // Base Classes
+                const baseClass = "px-4 h-10 flex items-center rounded transition-all uppercase text-sm tracking-wider font-bold relative group cursor-pointer";
+                const activeClass = isActive ? 'text-[#39ff14]' : 'text-gray-300 hover:text-white';
+
+                if (cats.length > 0) {
+                    // DROPDOWN RENDER
+                    cats.sort((a, b) => a.name.localeCompare(b.name));
+
+                    html += `
+                        <div class="${baseClass} ${activeClass}">
+                            <a href="${link.url}" class="flex items-center gap-1">
+                                ${link.label} <i class="fas fa-chevron-down text-[10px] transform group-hover:rotate-180 transition-transform"></i>
+                            </a>
+                            
+                            <!-- Dropdown Menu -->
+                            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[220px]">
+                                <div class="bg-[#0a0a0a] border border-gray-800 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col py-1">
+                                    ${cats.map(c => `
+                                        <a href="category.html?id=${c.id}" class="px-4 py-3 flex items-center gap-3 text-gray-400 hover:text-white hover:bg-white/5 transition-colors border-b border-gray-800/50 last:border-0 group/item">
+                                            <i class="${c.icon || 'fas fa-microchip'} text-[#39ff14] w-5 text-center group-hover/item:scale-110 transition-transform"></i>
+                                            <span class="text-xs font-bold uppercase tracking-wide">${c.name}</span>
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // STANDARD LINK
+                    html += `<a href="${link.url}" class="${baseClass} ${activeClass}">${link.label}</a>`;
+                }
             });
 
             navContainer.innerHTML = html;
@@ -2089,9 +2210,6 @@ window.deletePageType = (id) => {
 /* ============================
    GENERIC CATEGORY/TYPE PAGE LOGIC
    ============================ */
-/* ============================
-   GENERIC CATEGORY/TYPE PAGE LOGIC
-   ============================ */
 window.initCategoryPage = function () {
     const params = new URLSearchParams(window.location.search);
     const catId = params.get('id');
@@ -2099,16 +2217,34 @@ window.initCategoryPage = function () {
 
     // Elements
     const container = document.getElementById('product-container') || document.getElementById('search-results-container');
-    const sidebarContainer = document.getElementById('sidebar-container'); // The wrapper
-    const sidebarList = document.getElementById('dynamic-sidebar-categories'); // The UL
+    const sidebarContainer = document.getElementById('sidebar-container');
+    const sidebarList = document.getElementById('dynamic-sidebar-categories');
 
     if (catId) {
-        // --- SINGLE CATEGORY MODE (Standard Grid) ---
-        if (sidebarContainer) sidebarContainer.classList.add('hidden'); // Hide sidebar categories in single mode
+        // --- SINGLE CATEGORY MODE ---
+        if (sidebarContainer) sidebarContainer.classList.add('hidden');
 
-        db.collection('products').where('category', '==', catId).get().then(snap => {
+        // Fetch ALL products to filter case-insensitively (Client-side Fix)
+        // (Added Debug Logs & Trim)
+        db.collection('products').get().then(snap => {
+            console.log(`[DEBUG] Fetching for category ID: "${catId}"`);
             const products = [];
-            snap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+
+            // TRIM and LOWERCASE the target from URL
+            const target = catId ? catId.trim().toLowerCase() : '';
+            console.log(`[DEBUG] Target processed: "${target}"`);
+
+            snap.forEach(doc => {
+                const d = doc.data();
+                // Handle missing or whitespace-laden categories
+                const pCat = d.category ? d.category.trim().toLowerCase() : '';
+
+                // Check match
+                if (pCat === target) {
+                    products.push({ id: doc.id, ...d });
+                }
+            });
+            console.log(`[DEBUG] Match count: ${products.length}`);
 
             // Update Title
             db.collection('categories').doc(catId).get().then(doc => {
@@ -2122,12 +2258,11 @@ window.initCategoryPage = function () {
             });
 
             searchResults = products;
-            renderSearchResults(); // Use standard grid renderer
+            renderSearchResults();
         }).catch(err => console.error("Error loading category products:", err));
 
     } else if (typeId) {
-        // --- TYPE MODE (Grouped Sections + Sidebar) ---
-        // This makes it look like "Components" page
+        // --- TYPE MODE ---
         console.log(`Loading Type Grouped Layout: ${typeId}`);
 
         // 1. Setup Page Title
@@ -2145,23 +2280,22 @@ window.initCategoryPage = function () {
         // 2. Fetch Categories AND Products
         Promise.all([
             db.collection('categories').where('type', '==', typeId).get(),
-            db.collection('products').get() // Fetch all (cached) to filter client-side
+            db.collection('products').get()
         ]).then(([catSnap, prodSnap]) => {
 
             // A. Prepare Categories
             const categories = [];
             catSnap.forEach(doc => categories.push(doc.data()));
-            // Sort by name
             categories.sort((a, b) => a.name.localeCompare(b.name));
 
-            // B. Prepare Products (Map for faster lookup if needed, or just array)
+            // B. Prepare Products
             const allProducts = [];
             prodSnap.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
 
-            // Clear Container for Custom Rendering
+            // Clear Container
             if (container) {
                 container.innerHTML = '';
-                container.className = 'space-y-16'; // Vertical spacing between sections
+                container.className = 'space-y-16';
             }
 
             // Setup Sidebar
@@ -2173,11 +2307,8 @@ window.initCategoryPage = function () {
                 }
             }
 
-            let hasAnyProducts = false;
-
             // C. Render Groups
             categories.forEach(cat => {
-                // Filter Products for this Category
                 const catProducts = allProducts.filter(p => p.category === cat.id);
 
                 // Add to Sidebar
@@ -2189,54 +2320,36 @@ window.initCategoryPage = function () {
                     sidebarList.appendChild(li);
                 }
 
-                // If no products, skip section rendering (keeps page clean)
-                // OR render empty section if you want to show it exists? 
-                // "Components" page usually shows headings. Let's show header even if empty, or checking user preference.
-                // User said "copy mechanism". Usually mechanism hides empty or shows them.
-                // I'll show them if they have products, to be safe. 
-                // Wait, if I hide them, user might think category doesn't exist.
-                // But valid categories with 0 products are sad.
-                // Let's render if products > 0 OR if it's a valid category. 
-                // Let's render ALL valid categories.
+                if (catProducts.length === 0) return;
 
-                // Construct Section HTML
-                // Using Grid layout for the products inside
+                // HTML Construction
                 let productsHTML = '';
-                if (catProducts.length > 0) {
-                    hasAnyProducts = true;
-                    // Limit to 4 for preview? Or show all? Components page usually shows all or subset.
-                    // Let's show all for now.
-                    catProducts.forEach(prod => {
-                        // Reuse Card HTML Logic (Simplified)
-                        productsHTML += `
-                            <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden group hover:border-[#39ff14] transition-all flex flex-col h-full">
-                                <a href="product.html?id=${prod.id}" class="block relative aspect-square overflow-hidden bg-black">
-                                    <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                                    ${prod.stock === 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-sm uppercase">Out of Stock</span></div>' : ''}
-                                </a>
-                                <div class="p-5 flex flex-col flex-1">
-                                    <div class="mb-3">
-                                        <h3 class="text-lg font-bold text-white leading-tight mt-1 group-hover:text-[#39ff14] transition-colors line-clamp-2">
-                                            <a href="product.html?id=${prod.id}">${prod.name}</a>
-                                        </h3>
-                                    </div>
-                                    <div class="mt-auto flex items-end justify-between">
-                                        <span class="block text-xl font-black text-[#39ff14]">$${prod.price}</span>
-                                        <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
-                                            class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-[#39ff14] hover:text-black transition-all shadow-lg" 
-                                            ${prod.stock === 0 ? 'disabled' : ''}>
-                                            <i class="fas fa-cart-plus font-small"></i>
-                                        </button>
-                                    </div>
+                catProducts.forEach(prod => {
+                    productsHTML += `
+                        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden group hover:border-[#39ff14] transition-all flex flex-col h-full">
+                            <a href="product.html?id=${prod.id}" class="block relative aspect-square overflow-hidden bg-black">
+                                <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                ${prod.stock === 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-sm uppercase">Out of Stock</span></div>' : ''}
+                            </a>
+                            <div class="p-5 flex flex-col flex-1">
+                                <div class="mb-3">
+                                    <h3 class="text-lg font-bold text-white leading-tight mt-1 group-hover:text-[#39ff14] transition-colors line-clamp-2">
+                                        <a href="product.html?id=${prod.id}">${prod.name}</a>
+                                    </h3>
+                                </div>
+                                <div class="mt-auto flex items-end justify-between">
+                                    <span class="block text-xl font-black text-[#39ff14]">$${prod.price}</span>
+                                    <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${prod.price}, '${prod.image_url}', this)" 
+                                        class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-[#39ff14] hover:text-black transition-all shadow-lg" 
+                                        ${prod.stock === 0 ? 'disabled' : ''}>
+                                        <i class="fas fa-cart-plus font-small"></i>
+                                    </button>
                                 </div>
                             </div>
-                         `;
-                    });
-                } else {
-                    productsHTML = '<div class="col-span-full text-gray-600 italic text-sm py-4">No products in this category yet.</div>';
-                }
+                        </div>
+                     `;
+                });
 
-                // Append Section
                 const section = document.createElement('section');
                 section.id = `cat-${cat.id}`;
                 section.innerHTML = `
@@ -2253,8 +2366,7 @@ window.initCategoryPage = function () {
             if (categories.length === 0) {
                 container.innerHTML = `<div class="text-center py-20 text-gray-500">
                     <i class="fas fa-ghost text-4xl mb-4 text-gray-700"></i><br>
-                    No categories found for this section.<br>
-                    <span class="text-xs">Go to Admin > Categories and create a category with Type: <strong>${typeName || typeId}</strong></span>
+                    No categories found for this section.
                  </div>`;
             }
 
@@ -2584,3 +2696,80 @@ window.renderSearchResults = function () {
         container.insertAdjacentHTML('beforeend', cardHTML);
     });
 };
+
+/* ============================
+   GLOBAL FOOTER
+   ============================ */
+window.renderGlobalFooter = () => {
+    const footer = document.querySelector('footer');
+    if (!footer) return;
+
+    // Config (Easy to edit)
+    const config = {
+        brandName: "TECHZONE",
+        desc: "Follow us on social media for updates and offers!",
+        socials: [
+            { icon: "fab fa-instagram", url: "#" },
+            { icon: "fab fa-facebook-f", url: "#" },
+            { icon: "fab fa-telegram-plane", url: "#" }
+        ],
+        contact: {
+            address: "xxxxxxxxx",
+            mapLink: "https://maps.google.com",
+            phone: "xxxxxxx",
+            whatsapp: "https://wa.me/"
+        }
+    };
+
+    footer.className = "bg-black border-t border-gray-800 pt-16 pb-8 mt-auto";
+    footer.innerHTML = `
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+            <!-- Brand -->
+            <div>
+                <h2 class="text-2xl font-black text-[#39ff14] mb-4 tracking-tighter italic">${config.brandName}</h2>
+                <p class="text-gray-500 mb-6 max-w-xs">${config.desc}</p>
+                <div class="flex space-x-4">
+                    ${config.socials.map(s => `
+                        <a href="${s.url}" class="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center text-gray-400 hover:bg-[#39ff14] hover:text-black transition-all">
+                            <i class="${s.icon}"></i>
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Links -->
+            <div>
+                <h3 class="text-white font-bold uppercase tracking-wider mb-6">Quick Links</h3>
+                <ul class="space-y-3 text-gray-500 text-sm">
+                    <li><a href="index.html" class="hover:text-[#39ff14] transition-colors">Home</a></li>
+                    <li><a href="search.html?view=all" class="hover:text-[#39ff14] transition-colors">Products</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div>
+                <h3 class="text-white font-bold uppercase tracking-wider mb-6">Contact</h3>
+                <ul class="space-y-4 text-gray-400 text-sm">
+                    <li>
+                        <a href="${config.contact.mapLink}" target="_blank" class="flex items-start gap-3 hover:text-[#39ff14] transition-colors group">
+                            <i class="fas fa-map-marker-alt mt-1 group-hover:animate-bounce"></i>
+                            <span>${config.contact.address}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="${config.contact.whatsapp}" target="_blank" class="flex items-center gap-3 hover:text-[#39ff14] transition-colors">
+                            <i class="fab fa-whatsapp text-lg"></i>
+                            <span>${config.contact.phone}</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 pt-8 border-t border-gray-900 text-center text-gray-600 text-xs">
+            <p>&copy; ${new Date().getFullYear()} ${config.brandName}. All rights reserved.</p>
+        </div>
+    `;
+};
+
+document.addEventListener('DOMContentLoaded', renderGlobalFooter);

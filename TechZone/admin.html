@@ -92,10 +92,20 @@
                                 class="w-full bg-black border border-gray-800 p-2 rounded focus:border-[#00f3ff] outline-none text-sm resize-none text-white placeholder-gray-500"></textarea>
                         </div>
                         <div>
-                            <label class="block text-xs uppercase text-gray-500 mb-1">Image URL</label>
-                            <input type="url" id="p-image" placeholder="https://..."
-                                class="w-full bg-black border border-gray-800 p-2 rounded focus:border-[#00f3ff] outline-none text-sm text-white placeholder-gray-500">
-                            <p class="text-[10px] text-gray-600 mt-1">Leave empty for placeholder</p>
+                            <label class="block text-xs uppercase text-gray-500 mb-1">Product Images</label>
+                            <div id="image-inputs-container" class="space-y-2">
+                                <div class="flex gap-2">
+                                    <input type="text"
+                                        class="product-image-input w-full bg-black border border-gray-800 p-2 rounded focus:border-[#00f3ff] outline-none text-sm text-white font-mono"
+                                        placeholder="Main Image URL..." required>
+                                    <button type="button" class="text-red-500 px-2 opacity-50 cursor-not-allowed"><i
+                                            class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <button type="button" onclick="window.addMoreImageInput()"
+                                class="mt-2 text-xs text-[#00f3ff] hover:text-white font-bold flex items-center gap-1">
+                                <i class="fas fa-plus"></i> Add Another Image
+                            </button>
                         </div>
                         <button type="submit"
                             class="w-full py-2 mt-2 bg-[#00f3ff] text-black font-bold uppercase hover:shadow-[0_0_15px_#00f3ff] transition-shadow">

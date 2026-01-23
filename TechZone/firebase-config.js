@@ -8,4 +8,8 @@ const firebaseConfig = {
     appId: "1:343317760905:web:bad9277e5bf9adae24af58",
     measurementId: "G-CSCC929R9J"
 };
-// No export needed for global scope usage in compat mode
+
+// Initialize Firebase Globally
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+console.log("Firebase Initialized", db);
