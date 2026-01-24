@@ -18,19 +18,21 @@
     <!-- Split Header -->
     <header class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-gray-800/50">
         <!-- Top Row: Logo, Search, Cart -->
-        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-8">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-2 md:gap-8">
             <!-- Logo -->
-            <a href="index.html" class="text-3xl font-black text-white tracking-tighter italic">
+            <a href="index.html"
+                class="text-xl md:text-3xl font-black text-white tracking-tighter italic whitespace-nowrap">
                 TECH<span class="text-[#39ff14]">ZONE</span>
             </a>
 
             <!-- Search Bar (Wide) -->
-            <form action="search.html" method="GET" class="hidden md:block flex-1 max-w-2xl relative">
-                <input type="text" name="q" id="search-input" placeholder="Search for products, brands and more..."
-                    class="w-full bg-gray-900 border border-gray-700 text-white rounded-r-full rounded-l-full py-2.5 px-6 pl-12 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <form action="search.html" method="GET" class="flex-1 max-w-2xl relative">
+                <input type="text" name="q" id="search-input" placeholder="Search..."
+                    class="w-full bg-[#222] border border-gray-700 text-white rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner text-sm md:text-base">
+                <i
+                    class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs md:text-base"></i>
                 <button type="submit"
-                    class="absolute right-1 top-1 bottom-1 bg-[#39ff14] text-black font-bold px-6 rounded-full hover:bg-[#32cc11] transition-colors uppercase text-sm tracking-wide">
+                    class="hidden md:block absolute right-1 top-1 bottom-1 bg-[#39ff14] text-black font-bold px-6 rounded-full hover:bg-[#32cc11] transition-colors uppercase text-sm tracking-wide">
                     Search
                 </button>
             </form>

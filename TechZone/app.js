@@ -1276,7 +1276,7 @@ function renderGrid(products, container) {
         <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
             ${isOutOfStock ? `<div class="absolute top-6 left-[-45px] w-[170px] bg-[#39ff14] text-black text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-[#32cc11]">Not Available</div>` : ''}
             <a href="product.html?id=${product.id}" class="block relative aspect-square overflow-hidden bg-black cursor-pointer">
-                <img src="${product.image_url}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
+                <img src="${product.image_url}" onerror="this.src='assets/default-product.png'" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
             </a>
             <div class="p-5 flex-1 flex flex-col">
                 <div class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-bold">${product.category || 'Hardware'}</div>
@@ -1395,9 +1395,6 @@ function loadDynamicSections(typeFilter, containerId) {
 
 
 
-/* ============================
-   PRODUCT DETAIL LOGIC
-   ============================ */
 /* ============================
    PRODUCT DETAIL LOGIC
    ============================ */
@@ -1523,7 +1520,7 @@ function loadProductDetails() {
                              </div>
                              
                              <!-- Add Button -->
-                             <button onclick="window.addToCart({ id: '${doc.id}', name: '${p.name.replace(/'/g, "\\'")}', price: ${p.price}, image_url: '${mainImg}', stock: ${stock} }, parseInt(document.getElementById('detail-qty').value), this)" 
+                             <button onclick="const qtyEl = document.getElementById('detail-qty'); const qty = qtyEl ? parseInt(qtyEl.value) : 1; window.addToCart({ id: '${doc.id}', name: '${p.name.replace(/'/g, "\\'")}', price: ${p.price}, image_url: '${mainImg}', stock: ${stock} }, qty, this)" 
                                 class="flex-1 bg-[#39ff14] text-black font-black uppercase tracking-widest text-xl rounded-lg hover:bg-[#32cc11] transition-all shadow-[0_0_25px_rgba(57,255,20,0.4)] flex items-center justify-center gap-3 hover:scale-[1.02]">
                                 <i class="fas fa-shopping-cart"></i> Add to Cart
                              </button>
@@ -1607,7 +1604,7 @@ function loadRelatedProducts(currentId) {
             const card = `
                 <div class="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col snap-start group hover:border-[#39ff14] transition-all">
                     <a href="product.html?id=${prod.id}" class="block overflow-hidden rounded-lg mb-4 relative aspect-square">
-                        <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="${prod.image_url}" onerror="this.src='assets/default-product.png'" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </a>
                     <div class="flex-1 flex flex-col">
                         <h4 class="text-white font-bold mb-1 truncate">${prod.name}</h4>
@@ -2235,7 +2232,6 @@ window.seedStandardNavigation = async () => {
     }
 };
 
-// Global Nav Renderer
 // Global Nav Renderer
 window.renderGlobalNavigation = () => {
     const navContainer = document.getElementById('dynamic-nav');
@@ -2899,7 +2895,7 @@ window.renderSearchResults = function () {
             cardHTML = `
                 <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden group hover:border-[#39ff14] transition-all flex flex-col h-full">
                     <a href="product.html?id=${prod.id}" class="block relative aspect-square overflow-hidden bg-black">
-                        <img src="${prod.image_url}" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="${prod.image_url}" onerror="this.src='assets/default-product.png'" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         ${prod.stock === 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-sm uppercase">Out of Stock</span></div>' : ''}
                     </a>
                     <div class="p-5 flex flex-col flex-1">
