@@ -18,13 +18,13 @@
     <!-- Split Header -->
     <header class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-gray-800/50">
         <!-- Top Row: Logo, Search, Cart -->
-        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-8">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-4 md:gap-8">
             <!-- Logo -->
-            <a href="index.html" class="text-3xl font-black text-white tracking-tighter italic">
+            <a href="index.html" class="text-2xl md:text-3xl font-black text-white tracking-tighter italic z-50">
                 TECH<span class="text-[#39ff14]">ZONE</span>
             </a>
 
-            <!-- Search Bar (Wide) -->
+            <!-- Search Bar (Desktop) -->
             <form action="search.html" method="GET" class="hidden md:block flex-1 max-w-2xl relative">
                 <input type="text" name="q" id="search-input" placeholder="Search for products, brands and more..."
                     class="w-full bg-gray-900 border border-gray-700 text-white rounded-r-full rounded-l-full py-2.5 px-6 pl-12 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner">
@@ -35,12 +35,19 @@
                 </button>
             </form>
 
-            <!-- Cart & Actions -->
-            <div class="flex items-center space-x-6">
+            <!-- Right Actions (Mobile & Desktop) -->
+            <div class="flex items-center space-x-4 md:space-x-6">
+                <!-- Mobile Search Icon -->
+                <a href="search.html" class="md:hidden text-white hover:text-[#39ff14]">
+                    <i class="fas fa-search text-xl"></i>
+                </a>
+
+                <!-- Cart -->
                 <div class="relative cursor-pointer group" id="cart-btn">
+                    <!-- Icon Only on Mobile, Text on Desktop -->
                     <div class="flex items-center space-x-2 text-white group-hover:text-[#39ff14] transition-colors">
                         <div class="relative">
-                            <i class="fas fa-shopping-cart text-2xl"></i>
+                            <i class="fas fa-shopping-cart text-xl md:text-2xl"></i>
                             <span id="cart-count"
                                 class="absolute -top-2 -right-2 bg-[#ff00ff] text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-black">0</span>
                         </div>
@@ -50,6 +57,12 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Hamburger (Mobile Only) -->
+                <button onclick="window.openDrawer()"
+                    class="md:hidden text-white hover:text-[#39ff14] transition-colors p-2">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
             </div>
         </div>
 

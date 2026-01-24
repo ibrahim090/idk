@@ -1377,7 +1377,8 @@ function loadDynamicSections(typeFilter, containerId) {
                             Show All <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
                         </a>
                     </div>
-                    <div id="${gridId}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    </div>
+                    <div id="${gridId}" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
                         <div class="col-span-full text-center text-gray-500 py-10">Loading products...</div>
                     </div>
                 </section>
@@ -2376,10 +2377,155 @@ window.injectMobileNav = () => {
     document.body.style.paddingBottom = "80px";
 };
 
+// 8. Inject Joker-Style Drawer
+window.injectDrawer = () => {
+    if (document.getElementById('mobile-drawer')) return;
+
+    // Structure
+    const html = `
+    <!-- Drawer Backdrop -->
+    <div id="drawer-backdrop" onclick="window.closeDrawer()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden transition-opacity opacity-0"></div>
+
+    <!-- Drawer Panel -->
+    <div id="mobile-drawer" class="fixed inset-y-0 right-0 z-[70] w-[85%] max-w-[300px] bg-[#050505] border-l border-gray-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+        
+        <!-- Header -->
+        <div class="p-5 flex items-center justify-between border-b border-gray-800">
+            <span class="text-xl font-black text-white italic">MENU</span>
+            <button onclick="window.closeDrawer()" class="w-8 h-8 rounded-full bg-gray-900 text-gray-400 hover:text-white flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-6">
+            
+            <!-- Quick Actions -->
+            <div class="space-y-3">
+                <a href="index.html" class="flex items-center gap-3 p-4 rounded-xl bg-gray-900/50 border border-gray-800 hover:border-[#39ff14] transition-colors group">
+                    <div class="w-10 h-10 rounded-full bg-[#39ff14]/10 text-[#39ff14] flex items-center justify-center group-hover:bg-[#39ff14] group-hover:text-black transition-colors">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="font-bold text-white tracking-wide">Home</span>
+                </a>
+                <a href="builder.html" class="flex items-center gap-3 p-4 rounded-xl bg-gray-900/50 border border-gray-800 hover:border-[#00f3ff] transition-colors group">
+                    <div class="w-10 h-10 rounded-full bg-[#00f3ff]/10 text-[#00f3ff] flex items-center justify-center group-hover:bg-[#00f3ff] group-hover:text-black transition-colors">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <span class="font-bold text-white tracking-wide">PC Builder</span>
+                </a>
+            </div>
+
+            <!-- Categories Accordion -->
+            <div>
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Discover Products</h3>
+                <div id="drawer-categories" class="space-y-1">
+                    <!-- Categories Injected Here -->
+                    <div class="text-gray-600 text-sm italic">Loading categories...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-5 border-t border-gray-800 bg-gray-900/30">
+            <div class="flex items-center justify-between mb-4">
+                <a href="#" class="text-sm font-bold text-gray-400 hover:text-white flex items-center gap-2">
+                    <i class="fas fa-globe"></i> English
+                </a>
+                <a href="#" class="text-sm font-bold text-gray-400 hover:text-white flex items-center gap-2">
+                    <i class="fas fa-user"></i> Account
+                </a>
+            </div>
+            <p class="text-[10px] text-gray-600 text-center">v1.0.0 &copy; TechZone</p>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    // Populate Categories (Grouped)
+    db.collection('categories').get().then(snap => {
+        const container = document.getElementById('drawer-categories');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Group by Type
+        const types = {
+            'component': { label: 'PC Components', icon: 'fa-microchip', color: 'text-blue-500' },
+            'accessory': { label: 'Accessories', icon: 'fa-headset', color: 'text-purple-500' },
+            'laptop': { label: 'Laptops', icon: 'fa-laptop', color: 'text-green-500' }
+            // Add others if needed
+        };
+
+        const grouped = {};
+        snap.forEach(doc => {
+            const data = doc.data();
+            const type = data.type || 'other';
+            if (!grouped[type]) grouped[type] = [];
+            grouped[type].push({ id: doc.id, ...data });
+        });
+
+        // Render Accordions
+        Object.entries(types).forEach(([typeKey, meta]) => {
+            const items = grouped[typeKey] || [];
+            if (items.length === 0) return;
+
+            const html = `
+                <div class="border-b border-gray-800/50 last:border-0">
+                    <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.arrow').classList.toggle('rotate-180')" 
+                            class="w-full flex items-center justify-between py-3 text-gray-300 hover:text-white transition-colors">
+                        <span class="flex items-center gap-3">
+                            <i class="fas ${meta.icon} ${meta.color} w-5 text-center"></i> ${meta.label}
+                        </span>
+                        <i class="fas fa-chevron-down text-xs text-gray-600 transition-transform arrow"></i>
+                    </button>
+                    <div class="hidden pl-8 pb-3 space-y-2 animate-fade-in">
+                        ${items.map(cat => `
+                            <a href="category.html?id=${cat.id}" class="block text-sm text-gray-500 hover:text-[#39ff14] py-1 border-l-2 border-transparent hover:border-[#39ff14] pl-3">
+                                ${cat.name}
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    });
+};
+
+window.openDrawer = () => {
+    // Inject if missing (lazy load)
+    if (!document.getElementById('mobile-drawer')) window.injectDrawer();
+
+    const drawer = document.getElementById('mobile-drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+
+    if (drawer && backdrop) {
+        backdrop.classList.remove('hidden');
+        setTimeout(() => backdrop.classList.remove('opacity-0'), 10); // Fade in
+        drawer.classList.remove('translate-x-full'); // Slide in
+        document.body.style.overflow = 'hidden'; // Lock scroll
+    }
+};
+
+window.closeDrawer = () => {
+    const drawer = document.getElementById('mobile-drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+
+    if (drawer && backdrop) {
+        drawer.classList.add('translate-x-full');
+        backdrop.classList.add('opacity-0');
+        setTimeout(() => {
+            backdrop.classList.add('hidden');
+            document.body.style.overflow = ''; // Unlock scroll
+        }, 300);
+    }
+};
+
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // Only run if not already running (firebase-config might trigger)
-    renderGlobalNavigation();
-    injectMobileNav();
+    window.injectDrawer();
 });
 
 // Load Page Types into "Add Category" Dropdown
@@ -2835,7 +2981,7 @@ window.renderSearchResults = function () {
     if (searchViewMode === 'list') {
         container.className = "flex flex-col gap-4";
     } else {
-        container.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
+        container.className = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6";
     }
 
     searchResults.forEach(prod => {
