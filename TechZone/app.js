@@ -232,7 +232,8 @@ function initAdmin() {
             const price = parseFloat(document.getElementById('p-price').value);
             const stock = parseInt(document.getElementById('p-stock').value) || 0;
             const category = document.getElementById('p-category').value;
-            const socket = document.getElementById('p-socket').value.trim(); // Capture Socket
+            const socketInput = document.getElementById('p-socket');
+            const socket = socketInput ? socketInput.value.trim() : '';
             const desc = document.getElementById('p-desc').value;
             const specsRaw = document.getElementById('p-specs') ? document.getElementById('p-specs').value : '';
             const specs = specsRaw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
@@ -300,13 +301,21 @@ function initAdmin() {
             btn.textContent = "Adding...";
             btn.disabled = true;
 
-            const title = document.getElementById('b-title').value;
-            const subtitle = document.getElementById('b-subtitle').value;
-            const image = document.getElementById('b-image').value;
-            const link = document.getElementById('b-link').value;
-            const btnText = document.getElementById('b-btn').value;
-            const color = document.getElementById('b-color').value;
-            const btnColor = document.getElementById('b-btn-color').value;
+            const titleEl = document.getElementById('b-title');
+            const subEl = document.getElementById('b-subtitle');
+            const imgEl = document.getElementById('b-image');
+            const linkEl = document.getElementById('b-link');
+            const btnTextEl = document.getElementById('b-btn');
+            const colorEl = document.getElementById('b-color');
+            const btnColorEl = document.getElementById('b-btn-color');
+
+            const title = titleEl ? titleEl.value : '';
+            const subtitle = subEl ? subEl.value : '';
+            const image = imgEl ? imgEl.value : '';
+            const link = linkEl ? linkEl.value : '';
+            const btnText = btnTextEl ? btnTextEl.value : '';
+            const color = colorEl ? colorEl.value : '#ffffff';
+            const btnColor = btnColorEl ? btnColorEl.value : '#39ff14';
 
             db.collection("banners").add({
                 title, subtitle, image_url: image, link, btn_text: btnText, color, btn_color: btnColor,
@@ -1376,7 +1385,7 @@ function loadDynamicSections(typeFilter, containerId) {
                         <a href="category.html?id=${cat.id}" class="text-sm font-bold text-gray-500 hover:text-[#39ff14] uppercase tracking-wide transition-colors flex items-center gap-2 group">
                             Show All <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
                         </a>
-                    </div>
+                        </a>
                     </div>
                     <div id="${gridId}" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
                         <div class="col-span-full text-center text-gray-500 py-10">Loading products...</div>

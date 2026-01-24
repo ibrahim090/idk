@@ -16,40 +16,76 @@
 <body class="text-white selection:bg-[#39ff14] selection:text-black">
 
     <!-- Navbar -->
-    <nav class="border-b border-gray-800 sticky top-0 bg-black/90 backdrop-blur z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <div class="flex-shrink-0">
-                    <a href="index.html" class="text-2xl font-black text-white tracking-tighter">
-                        TECH<span class="text-[#39ff14]">ZONE</span>
-                    </a>
-                </div>
-                <!-- Nav Links -->
-                <div class="hidden md:block">
-                    <div id="dynamic-nav" class="flex items-center space-x-8">
-                        <!-- Populated by app.js -->
-                        <span class="text-gray-500 text-xs italic">Loading menu...</span>
+    <!-- Split Header -->
+    <header class="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-gray-800/50">
+        <!-- Top Row: Logo, Search, Cart -->
+        <div class="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between gap-2 md:gap-8">
+            <!-- Logo -->
+            <a href="index.html"
+                class="text-xl md:text-3xl font-black text-white tracking-tighter italic z-50 flex-shrink-0">
+                TECH<span class="text-[#39ff14]">ZONE</span>
+            </a>
+
+            <!-- Search Bar (Unified) -->
+            <form action="search.html" method="GET" class="flex-1 max-w-2xl relative mx-2 md:mx-0">
+                <input type="text" name="q" id="search-input" placeholder="Search..."
+                    class="w-full bg-gray-900/80 border border-gray-700/50 text-white rounded-lg md:rounded-full py-2 px-4 md:px-6 md:pl-12 text-sm focus:outline-none focus:border-[#39ff14] placeholder-gray-500 transition-all shadow-inner">
+                <i
+                    class="fas fa-search absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs md:text-base"></i>
+                <button type="submit"
+                    class="hidden md:block absolute right-1 top-1 bottom-1 bg-[#39ff14] text-black font-bold px-6 rounded-full hover:bg-[#32cc11] transition-colors uppercase text-sm tracking-wide">
+                    Search
+                </button>
+            </form>
+
+            <!-- Right Actions -->
+            <div class="flex items-center space-x-3 md:space-x-6 flex-shrink-0">
+                <!-- User Icon (Mobile) -->
+                <a href="#" class="md:hidden text-gray-300 hover:text-white">
+                    <i class="far fa-user text-lg"></i>
+                </a>
+
+                <!-- Cart -->
+                <div class="relative cursor-pointer group" id="cart-btn">
+                    <div class="flex items-center space-x-2 text-white group-hover:text-[#39ff14] transition-colors">
+                        <div class="relative">
+                            <i class="fas fa-shopping-cart text-lg md:text-2xl"></i>
+                            <span id="cart-count"
+                                class="absolute -top-2 -right-2 bg-[#ff00ff] text-white text-[10px] font-bold h-4 w-4 md:h-5 md:w-5 flex items-center justify-center rounded-full border-2 border-black">0</span>
+                        </div>
+                        <div class="hidden lg:block text-xs font-bold text-left">
+                            <div class="text-gray-400 group-hover:text-[#39ff14]">Shopping</div>
+                            <div>Cart</div>
+                        </div>
                     </div>
                 </div>
-                <!-- Search Bar -->
-                <!-- Search Bar -->
-                <form action="search.html" method="GET" class="hidden md:flex items-center flex-1 mx-8">
-                    <div class="relative w-full max-w-md">
-                        <input type="text" name="q" id="search-input" placeholder="Search accessories..."
-                            class="w-full bg-gray-900 border border-gray-700 text-white rounded-full py-1.5 px-4 pl-10 focus:outline-none focus:border-[#39ff14] placeholder-gray-500 text-sm transition-all">
-                        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                    </div>
-                </form>
-                <!-- Cart Icon -->
-                <div class="relative cursor-pointer" id="cart-btn">
-                    <i class="fas fa-shopping-cart text-[#00f3ff] text-xl"></i>
-                    <span id="cart-count"
-                        class="absolute -top-2 -right-2 bg-[#ff00ff] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+
+                <!-- Hamburger -->
+                <button onclick="window.openDrawer()"
+                    class="md:hidden text-white hover:text-[#39ff14] transition-colors p-1">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Navigation Links (HIDDEN ON MOBILE) -->
+        <div class="hidden md:block border-t border-gray-800 bg-gray-900/50" id="section-nav">
+            <div class="max-w-7xl mx-auto px-4 h-12 flex items-center">
+                <div id="dynamic-nav" class="flex space-x-8 text-sm font-bold uppercase tracking-wider text-gray-300">
+                    <!-- Default State before JS Loads -->
+                    <a href="index.html"
+                        class="text-[#39ff14] border-b-2 border-[#39ff14] h-12 flex items-center">Home</a>
+                    <a href="laptops.html"
+                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Laptops</a>
+                    <a href="components.html"
+                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">PC
+                        Components</a>
+                    <a href="accessories.html"
+                        class="hover:text-white hover:bg-gray-800 px-3 h-8 flex items-center rounded transition-all">Accessories</a>
                 </div>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- Header -->
     <div class="bg-gray-900 border-b border-gray-800 py-10">
