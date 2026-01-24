@@ -158,86 +158,72 @@ window.closePicker = () => {
     activeStepId = null;
 };
 
-// --- AI LOGIC (Gemini 1.5 Flash) ---
-let genAI = null;
-let aiModel = null;
-
-async function checkAICompatibility() {
-    // Lazy Init
-    if (!window.GoogleGenerativeAI) return;
-    if (!aiModel) {
-        try {
-            // Using the key from firebase-config for demo purposes
-            const API_KEY = "AIzaSyDtXNyRvQYet8W5kkoxrpZlz_raZJ_y4Wk";
-            genAI = new window.GoogleGenerativeAI(API_KEY);
-            aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        } catch (e) {
-            console.error("AI Init Error:", e);
-            return;
-        }
-    }
-
-    const parts = Object.values(buildState);
-    if (parts.length === 0) return;
-
-    const feedbackEl = document.getElementById('ai-feedback');
-    const loadingEl = document.getElementById('ai-loading');
-
-    if (loadingEl) loadingEl.classList.remove('hidden');
-
-    // Construct Prompt
-    const prompt = `
-        As a PC Building Expert, analyze this build list for compatibility issues:
-        ${parts.map(p => `- ${p.category} (${p.socket || 'N/A'}): ${p.name}`).join('\n')}
-        
-        1. Are the parts compatible? (Yes/No)
-        2. Any warnings or notes? (Short)
-        3. Suggest ONE missing critical component if applicable.
-        Keep response under 30 words.
-    `;
-
-    try {
-        const result = await aiModel.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        if (feedbackEl) {
-            feedbackEl.innerHTML = `<p class="text-white text-sm"><i class="fas fa-magic text-[#39ff14] mr-2"></i> ${text.replace(/\*\*/g, '')}</p>`; // Basic formatting
-        }
-    } catch (e) {
-        console.error("AI Check Failed:", e);
-        if (feedbackEl) feedbackEl.innerHTML = `<p class="text-red-500 text-xs">AI Service Unavailable.</p>`;
-    } finally {
-        if (loadingEl) loadingEl.classList.add('hidden');
-    }
-}
-
-// Hook into selection (Override existing function partial)
-const _originalSelect = window.selectProduct;
 window.selectProduct = (product) => {
-    // Re-implement or call original? Since original is window attached, we can copy body.
-    // Easier to just duplicate logic here to be safe and clear.
-
     if (!activeStepId) return;
 
     // Set State
     buildState[activeStepId] = product;
 
-    // Clear dependencies if conflict
+    // Clear dependencies if conflict? (e.g. Changed CPU socket)
     if (activeStepId === 'cpu') {
+        // If we have a mobo selected, check if it's still compatible. If not, remove it.
         if (buildState.motherboard && buildState.motherboard.socket !== product.socket) {
             delete buildState.motherboard;
-            alert("Motherboard deselected: Socket mismatch with new CPU.");
+            // Optionally alert user or Toast?
         }
     }
 
     renderSlots();
     updateSummary();
     closePicker();
-
-    // Trigger AI
-    checkAICompatibility();
 };
+
+
+function updateSummary() {
+    const list = document.getElementById('build-summary-list');
+    const totalEl = document.getElementById('build-total');
+    const finishBtn = document.getElementById('finish-build-btn');
+
+    const parts = Object.values(buildState);
+    const total = parts.reduce((sum, p) => sum + parseFloat(p.price || 0), 0);
+
+    totalEl.textContent = `$${total.toFixed(2)}`;
+
+    finishBtn.disabled = parts.length === 0;
+    if (parts.length > 0) {
+        finishBtn.classList.remove('bg-gray-800', 'text-gray-500');
+        finishBtn.classList.add('bg-[#39ff14]', 'text-black');
+    } else {
+        finishBtn.classList.add('bg-gray-800', 'text-gray-500');
+        finishBtn.classList.remove('bg-[#39ff14]', 'text-black');
+    }
+
+
+
+    if (parts.length === 0) {
+        list.innerHTML = `<p class="text-gray-600 text-sm text-center italic py-4">No parts selected.</p>`;
+        return;
+    }
+
+    list.innerHTML = BUILDER_STEPS.map(step => {
+        const item = buildState[step.id];
+        if (!item) return '';
+        return `
+            <div class="flex justify-between items-start text-xs border-b border-gray-800/50 pb-2 last:border-0 hover:bg-gray-800/30 p-1 rounded transition-colors group">
+               <div>
+                    <span class="text-gray-500 font-bold uppercase text-[10px] block">${step.title}</span>
+                    <span class="text-white line-clamp-1">${item.name}</span>
+               </div>
+               <span class="text-[#39ff14] font-mono whitespace-nowrap ml-2">$${item.price}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+
+// --- AI LOGIC (Unchanged mostly, just re-renders slots) ---
+// --- AI ANALYZER ---
+
 
 function finishBuild() {
     Object.values(buildState).forEach(item => {
