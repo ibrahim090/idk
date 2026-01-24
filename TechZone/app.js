@@ -494,21 +494,21 @@ function loadAdminInventory() {
             const row = document.createElement('tr');
             row.className = "hover:bg-gray-900/50 transition-colors";
             row.innerHTML = `
-                <td class="p-3 text-center">
+                <td class="p-3 text-center" data-label="Select">
                     <input type="checkbox" value="${doc.id}" class="product-checkbox accent-[#39ff14] cursor-pointer w-4 h-4" onclick="window.updateBatchDeleteUI()">
                 </td>
-                <td class="p-3"><img src="${data.image_url}" class="w-10 h-10 object-cover rounded border border-gray-700"></td>
-                <td class="p-3 font-semibold text-white">${data.name}</td>
-                <td class="p-3"><span class="px-2 py-1 text-xs rounded bg-gray-800 text-gray-300">${data.category}</span></td>
-                <td class="p-3 text-[#39ff14]">$${data.price}</td>
-                <td class="p-3">
+                <td class="p-3" data-label="Image"><img src="${data.image_url}" class="w-10 h-10 object-cover rounded border border-gray-700"></td>
+                <td class="p-3 font-semibold text-white" data-label="Product">${data.name}</td>
+                <td class="p-3" data-label="Category"><span class="px-2 py-1 text-xs rounded bg-gray-800 text-gray-300">${data.category}</span></td>
+                <td class="p-3 text-[#39ff14]" data-label="Price">$${data.price}</td>
+                <td class="p-3" data-label="Stock">
                     <input type="number" min="0" value="${data.stock !== undefined ? data.stock : 0}" 
-                           class="w-20 bg-black border border-gray-700 p-1 text-[#00f3ff] text-center rounded focus:border-[#39ff14] outline-none font-mono"
+                           class="w-24 bg-black border border-gray-700 p-1 text-[#00f3ff] text-right rounded focus:border-[#39ff14] outline-none font-mono"
                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57)"
                            oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                            onchange="if(this.value === '' || parseInt(this.value) < 0) this.value = 0; window.updateProductStock('${doc.id}', this.value)">
                 </td>
-                <td class="p-3 text-right">
+                <td class="p-3 text-right" data-label="Actions">
                     <button class="text-red-500 hover:text-red-400 p-2" onclick="window.deleteProduct('${doc.id}')">
                         <i class="fas fa-trash"></i>
                     </button>

@@ -64,6 +64,22 @@
     /* Firefox */
 }
 
+/* Fluid Typography Overrides for Responsiveness */
+h1,
+.text-7xl {
+    font-size: clamp(2.5rem, 6vw, 4.5rem) !important;
+    line-height: 1.1 !important;
+}
+
+.text-5xl {
+    font-size: clamp(2rem, 5vw, 3rem) !important;
+}
+
+h2,
+.text-3xl {
+    font-size: clamp(1.5rem, 4vw, 2.25rem) !important;
+}
+
 /* Premium Background */
 /* Premium Cyber Grid Background */
 body {
