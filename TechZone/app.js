@@ -2290,6 +2290,13 @@ window.loadMobileDrawer = () => {
             'accessory': 'Accessories'
         };
 
+        // URL Mapping for Direct Navigation
+        const typeUrlMap = {
+            'laptop': 'laptops.html',
+            'component': 'components.html',
+            'accessory': 'accessories.html'
+        };
+
         container.innerHTML = ''; // Clear skeleton
 
         Object.keys(typeMap).forEach(typeKey => {
@@ -2303,7 +2310,7 @@ window.loadMobileDrawer = () => {
                 <div class="bg-[#1f1f1f] rounded-lg overflow-hidden transition-all mb-2 mobile-category-card">
                     <div class="flex items-stretch border-b border-gray-800/30">
                         <!-- A. Text Label (Link) - Direct Navigation -->
-                        <a href="search.html?q=${encodeURIComponent(typeMap[typeKey])}" class="flex-1 flex items-center gap-3 p-4 hover:bg-white/5 transition-colors group select-none">
+                        <a href="${typeUrlMap[typeKey] || '#'}" class="flex-1 flex items-center gap-3 p-4 hover:bg-white/5 transition-colors group select-none">
                             <i class="${cats[0].icon || 'fas fa-layer-group'} text-gray-500 w-5 text-center group-hover:text-[#39ff14] transition-colors"></i>
                             <span class="text-sm font-bold text-gray-200 uppercase tracking-wide group-hover:text-white transition-colors">${typeMap[typeKey]}</span>
                         </a>
