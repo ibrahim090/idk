@@ -2300,20 +2300,20 @@ window.loadMobileDrawer = () => {
             cats.sort((a, b) => a.name.localeCompare(b.name));
 
             const html = `
-                <div class="border border-gray-800 rounded-lg overflow-hidden bg-[#1a1a1a] mb-2">
-                    <details class="group/mobile-acc" ${typeKey === 'laptop' ? 'open' : ''}>
-                        <summary class="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none">
-                            <span class="text-xs font-bold text-gray-300 uppercase tracking-wide flex items-center gap-2">
-                                <i class="${cats[0].icon || 'fas fa-layer-group'} text-gray-600"></i>
+                <div class="bg-[#1f1f1f] rounded-lg overflow-hidden transition-all">
+                    <details class="group/mobile-details" ${typeKey === 'laptop' ? 'open' : ''}>
+                        <summary class="flex items-center justify-between p-4 cursor-pointer select-none">
+                            <span class="text-sm font-bold text-gray-200 uppercase tracking-wide flex items-center gap-3">
+                                <i class="${cats[0].icon || 'fas fa-layer-group'} text-gray-500 w-5 text-center"></i>
                                 ${typeMap[typeKey]}
                             </span>
-                            <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform group-open/mobile-acc:rotate-180"></i>
+                            <i class="fas fa-chevron-down text-xs text-gray-600 transition-transform duration-300 group-open/mobile-details:rotate-180"></i>
                         </summary>
-                        <div class="px-3 pb-3 space-y-1 bg-black/40 border-t border-gray-800/50 pt-2">
+                        <div class="px-4 pb-4 space-y-1">
                             ${cats.map(c => `
-                                <a href="category.html?id=${c.id}" class="flex items-center justify-between py-2 px-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded transition-all">
-                                    <span>${c.name}</span>
-                                    <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 text-[#39ff14]"></i>
+                                <a href="category.html?id=${c.id}" class="flex items-center justify-between py-3 px-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded transition-all group/item">
+                                    <span class="font-medium">${c.name}</span>
+                                    <i class="fas fa-chevron-right text-[10px] text-gray-700 opacity-100 group-hover/item:text-[#39ff14] transition-all"></i>
                                 </a>
                             `).join('')}
                         </div>
