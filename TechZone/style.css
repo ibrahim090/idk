@@ -152,4 +152,100 @@ body {
 
     /* We will need to add data-labels to TDs via JS if not present, 
        but for now this structure helps the stack layout. */
+
+    /* --- MOBILE REFACTOR OVERRIDES --- */
+
+    /* 1. Force 2-Column Grid */
+    #product-container,
+    #search-results-container {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        padding-bottom: 20px;
+    }
+
+    /* 2. White Card Styling */
+    #product-container>div,
+    #search-results-container>div {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        /* slate-200 */
+        border-radius: 12px !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+        overflow: hidden;
+    }
+
+    /* 3. Image Styling (Square + Contain) */
+    #product-container a.aspect-square,
+    #search-results-container a.aspect-square {
+        background: #ffffff !important;
+        padding: 12px !important;
+        /* Padding around image */
+        border-bottom: 1px solid #f3f4f6 !important;
+    }
+
+    #product-container img,
+    #search-results-container img {
+        object-fit: contain !important;
+        /* Ensure full visibility */
+    }
+
+    /* 4. Content Typography Adjustment */
+    #product-container h3,
+    #search-results-container h3 {
+        color: #1a202c !important;
+        /* Dark text */
+        font-size: 0.8rem !important;
+        line-height: 1.25 !important;
+        margin-bottom: 4px !important;
+    }
+
+    #product-container .p-5,
+    #search-results-container .p-5 {
+        padding: 10px !important;
+        /* Reduce padding */
+    }
+
+    #product-container .text-\[\#39ff14\],
+    #search-results-container .text-\[\#39ff14\] {
+        color: #10b981 !important;
+        /* Readable green on white */
+        text-shadow: none !important;
+    }
+
+    #product-container button,
+    #search-results-container button {
+        /* Adjust buttons */
+        transform: scale(0.9);
+        margin-left: auto;
+    }
+
+    /* 5. Banners & Carousel */
+    #hero-carousel {
+        margin: 0 16px 24px 16px !important;
+        width: auto !important;
+        border-radius: 16px !important;
+        height: 220px !important;
+        border: none !important;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .carousel-content {
+        padding: 1.5rem !important;
+    }
+
+    .carousel-content h1 {
+        font-size: 1.8rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .carousel-content a {
+        padding: 8px 16px !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* 6. Fix Sticky Bottom Nav Padding */
+    body {
+        padding-bottom: 80px;
+    }
 }

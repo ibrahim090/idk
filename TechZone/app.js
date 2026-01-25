@@ -2232,6 +2232,99 @@ window.seedStandardNavigation = async () => {
     }
 };
 
+/* ============================
+   MOBILE DRAWER LOGIC
+   ============================ */
+window.toggleMobileMenu = () => {
+    const drawer = document.getElementById('mobile-drawer');
+    const panel = document.getElementById('drawer-panel');
+    const backdrop = document.getElementById('drawer-backdrop');
+
+    if (!drawer || !panel || !backdrop) return;
+
+    if (drawer.classList.contains('hidden')) {
+        // OPEN
+        drawer.classList.remove('hidden');
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => {
+            backdrop.classList.remove('opacity-0');
+            panel.classList.remove('-translate-x-full');
+        }, 10);
+
+        // Load content if empty (simple check)
+        const catContainer = document.getElementById('mobile-drawer-categories');
+        if (catContainer && catContainer.querySelector('.animate-pulse')) {
+            window.loadMobileDrawer();
+        }
+
+    } else {
+        // CLOSE
+        backdrop.classList.add('opacity-0');
+        panel.classList.add('-translate-x-full');
+        document.body.style.overflow = '';
+
+        setTimeout(() => {
+            drawer.classList.add('hidden');
+        }, 300);
+    }
+};
+
+window.loadMobileDrawer = () => {
+    const container = document.getElementById('mobile-drawer-categories');
+    if (!container) return;
+
+    db.collection('categories').get().then(snap => {
+        const categoriesByType = {};
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (!categoriesByType[d.type]) categoriesByType[d.type] = [];
+            categoriesByType[d.type].push({ id: doc.id, ...d });
+        });
+
+        // Mapping types to readable names
+        const typeMap = {
+            'laptop': 'Laptops',
+            'component': 'PC Components',
+            'accessory': 'Accessories'
+        };
+
+        container.innerHTML = ''; // Clear skeleton
+
+        Object.keys(typeMap).forEach(typeKey => {
+            const cats = categoriesByType[typeKey] || [];
+            if (cats.length === 0) return;
+
+            // Sort
+            cats.sort((a, b) => a.name.localeCompare(b.name));
+
+            const html = `
+                <div class="border border-gray-800 rounded-lg overflow-hidden bg-[#1a1a1a] mb-2">
+                    <details class="group/mobile-acc" ${typeKey === 'laptop' ? 'open' : ''}>
+                        <summary class="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none">
+                            <span class="text-xs font-bold text-gray-300 uppercase tracking-wide flex items-center gap-2">
+                                <i class="${cats[0].icon || 'fas fa-layer-group'} text-gray-600"></i>
+                                ${typeMap[typeKey]}
+                            </span>
+                            <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform group-open/mobile-acc:rotate-180"></i>
+                        </summary>
+                        <div class="px-3 pb-3 space-y-1 bg-black/40 border-t border-gray-800/50 pt-2">
+                            ${cats.map(c => `
+                                <a href="category.html?id=${c.id}" class="flex items-center justify-between py-2 px-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded transition-all">
+                                    <span>${c.name}</span>
+                                    <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 text-[#39ff14]"></i>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </details>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    });
+};
+
 // Global Nav Renderer
 window.renderGlobalNavigation = () => {
     const navContainer = document.getElementById('dynamic-nav');
