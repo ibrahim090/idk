@@ -244,8 +244,14 @@ body {
         font-size: 0.75rem !important;
     }
 
-    /* 6. Fix Sticky Bottom Nav Padding */
+    /* 6. Remove Sticky Bottom Nav Padding & Hide Nav */
     body {
-        padding-bottom: 80px;
+        padding-bottom: 0 !important;
+    }
+
+    .sticky-bottom,
+    #bottom-nav,
+    .bottom-navigation {
+        display: none !important;
     }
 }
