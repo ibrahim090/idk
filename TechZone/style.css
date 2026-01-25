@@ -275,4 +275,10 @@ body {
         /* Reasonable width */
         width: 85% !important;
     }
+
+    /* 9. FORCE HIDE Desktop Nav Container on Mobile */
+    /* Targets the specific gray bar holding the text links */
+    header>div.border-t.border-gray-800 {
+        display: none !important;
+    }
 }
