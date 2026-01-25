@@ -2468,7 +2468,7 @@ window.injectMobileNav = () => {
 document.addEventListener('DOMContentLoaded', () => {
     // Only run if not already running (firebase-config might trigger)
     renderGlobalNavigation();
-    injectMobileNav();
+    // injectMobileNav(); // DISABLED: Bottom Nav removed for new Side Drawer layout
 });
 
 // Load Page Types into "Add Category" Dropdown

@@ -244,14 +244,35 @@ body {
         font-size: 0.75rem !important;
     }
 
-    /* 6. Remove Sticky Bottom Nav Padding & Hide Nav */
+    /* 6. Fix Sticky Bottom Nav Padding */
     body {
-        padding-bottom: 0 !important;
+        padding-bottom: 0px !important;
+        /* Reset padding since nav is gone */
     }
 
-    .sticky-bottom,
-    #bottom-nav,
-    .bottom-navigation {
+    /* 7. FORCE REMOVE Sticky Bottom Nav */
+    #mobile-bottom-nav {
         display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        pointer-events: none !important;
+    }
+
+    /* 8. Fix Drawer to be Full Height */
+    #mobile-drawer {
+        z-index: 9999 !important;
+    }
+
+    #drawer-panel {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        z-index: 10000 !important;
+        /* Above backdrop */
+        max-width: 300px !important;
+        /* Reasonable width */
+        width: 85% !important;
     }
 }
