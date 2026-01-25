@@ -2300,29 +2300,58 @@ window.loadMobileDrawer = () => {
             cats.sort((a, b) => a.name.localeCompare(b.name));
 
             const html = `
-                <div class="bg-[#1f1f1f] rounded-lg overflow-hidden transition-all">
-                    <details class="group/mobile-details" ${typeKey === 'laptop' ? 'open' : ''}>
-                        <summary class="flex items-center justify-between p-4 cursor-pointer select-none">
-                            <span class="text-sm font-bold text-gray-200 uppercase tracking-wide flex items-center gap-3">
-                                <i class="${cats[0].icon || 'fas fa-layer-group'} text-gray-500 w-5 text-center"></i>
-                                ${typeMap[typeKey]}
-                            </span>
-                            <i class="fas fa-chevron-down text-xs text-gray-600 transition-transform duration-300 group-open/mobile-details:rotate-180"></i>
-                        </summary>
-                        <div class="px-4 pb-4 space-y-1">
-                            ${cats.map(c => `
-                                <a href="category.html?id=${c.id}" class="flex items-center justify-between py-3 px-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded transition-all group/item">
-                                    <span class="font-medium">${c.name}</span>
-                                    <i class="fas fa-chevron-right text-[10px] text-gray-700 opacity-100 group-hover/item:text-[#39ff14] transition-all"></i>
-                                </a>
-                            `).join('')}
-                        </div>
-                    </details>
+                <div class="bg-[#1f1f1f] rounded-lg overflow-hidden transition-all mb-2 mobile-category-card">
+                    <div class="flex items-stretch border-b border-gray-800/30">
+                        <!-- A. Text Label (Link) - Direct Navigation -->
+                        <a href="search.html?q=${encodeURIComponent(typeMap[typeKey])}" class="flex-1 flex items-center gap-3 p-4 hover:bg-white/5 transition-colors group select-none">
+                            <i class="${cats[0].icon || 'fas fa-layer-group'} text-gray-500 w-5 text-center group-hover:text-[#39ff14] transition-colors"></i>
+                            <span class="text-sm font-bold text-gray-200 uppercase tracking-wide group-hover:text-white transition-colors">${typeMap[typeKey]}</span>
+                        </a>
+                        
+                        <!-- B. Arrow Icon (Button) - Toggle Only -->
+                        <button onclick="window.toggleDrawerAccordion(this)" class="w-[60px] flex items-center justify-center border-l border-gray-800/30 text-gray-500 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95">
+                            <i class="fas fa-chevron-down transition-transform duration-300 transform origin-center"></i>
+                        </button>
+                    </div>
+
+                    <!-- Sub-Menu (Hidden by Default) -->
+                    <div class="hidden bg-[#151515] px-4 py-2 space-y-1 border-t border-gray-800/30 mobile-accordion-content">
+                        ${cats.map(c => `
+                            <a href="category.html?id=${c.id}" class="flex items-center gap-3 py-3 px-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-r transition-all group/item ml-2 border-l-2 border-transparent hover:border-[#39ff14]">
+                                <i class="fas fa-angle-right text-[10px] text-gray-600 group-hover/item:text-[#39ff14] transition-colors"></i>
+                                <span class="font-medium text-xs uppercase tracking-wider">${c.name}</span>
+                            </a>
+                        `).join('')}
+                    </div>
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
         });
     });
+};
+
+/* ============================
+   SPLIT ACTION TOGGLE
+     ============================ */
+window.toggleDrawerAccordion = (btn) => {
+    // Navigate: Button -> Flex Row -> Content Div
+    const row = btn.parentElement;
+    const content = row.nextElementSibling;
+    const icon = btn.querySelector('i');
+
+    if (!content) return;
+
+    if (content.classList.contains('hidden')) {
+        // OPEN
+        content.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        btn.classList.add('text-[#39ff14]'); // Highlight button when open
+    } else {
+        // CLOSE
+        content.classList.add('hidden');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+        btn.classList.remove('text-[#39ff14]');
+    }
 };
 
 // Global Nav Renderer
