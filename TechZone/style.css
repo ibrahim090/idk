@@ -157,18 +157,27 @@ body {
 
     /* 1. Force 2-Column Grid (Homepage & Categories) */
     #product-container,
-    #search-results-container,
-    #products {
+    #search-results-container {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 10px !important;
         padding-bottom: 20px;
     }
 
+    /* 1b. Category Page Grids */
+    #products section .grid,
+    #products .grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
     /* 2. DARK Card Styling (Reverted from White) */
     #product-container>div,
     #search-results-container>div,
-    #products>div {
+    #products section .grid>div,
+    #products .grid>div {
         background: #121212 !important;
         /* Dark Grey */
         border: 1px solid #333 !important;
@@ -176,29 +185,38 @@ body {
         border-radius: 12px !important;
         box-shadow: none !important;
         overflow: hidden;
+        width: 100% !important;
     }
 
     /* 3. Image Styling (Square + Contain) */
     #product-container a.aspect-square,
     #search-results-container a.aspect-square,
-    #products a.aspect-square {
+    #products section .grid a.aspect-square,
+    #products .grid a.aspect-square {
         background: #050505 !important;
         /* Almost black */
         padding: 8px !important;
         border-bottom: 1px solid #222 !important;
+        width: 100% !important;
+        display: block !important;
+        aspect-ratio: 1 / 1 !important;
     }
 
     #product-container img,
     #search-results-container img,
-    #products img {
+    #products section .grid img,
+    #products .grid img {
         object-fit: contain !important;
         /* Ensure full visibility */
+        width: 100% !important;
+        height: 100% !important;
     }
 
     /* 4. Content Typography Adjustment */
     #product-container h3,
     #search-results-container h3,
-    #products h3 {
+    #products section .grid h3,
+    #products .grid h3 {
         color: #ffffff !important;
         /* White text */
         font-size: 0.85rem !important;
@@ -211,23 +229,27 @@ body {
 
     #product-container .p-5,
     #search-results-container .p-5,
-    #products .p-5 {
+    #products section .grid .p-5,
+    #products .grid .p-5 {
         padding: 12px !important;
         /* Balanced padding */
     }
 
     #product-container .text-\[\#39ff14\],
     #search-results-container .text-\[\#39ff14\],
-    #products .text-\[\#39ff14\] {
+    #products section .grid .text-\[\#39ff14\],
+    #products .grid .text-\[\#39ff14\] {
         color: #39ff14 !important;
         /* Neon Green */
         text-shadow: 0 0 5px rgba(57, 255, 20, 0.3) !important;
     }
 
     /* Hide generic 'In Stock' labels if they clutter */
+    /* Hide generic 'In Stock' labels if they clutter */
     #product-container .text-gray-500,
     #search-results-container .text-gray-500,
-    #products .text-gray-500 {
+    #products section .grid .text-gray-500,
+    #products .grid .text-gray-500 {
         color: #888 !important;
     }
 
