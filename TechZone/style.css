@@ -155,63 +155,82 @@ body {
 
     /* --- MOBILE REFACTOR OVERRIDES --- */
 
-    /* 1. Force 2-Column Grid */
+    /* 1. Force 2-Column Grid (Homepage & Categories) */
     #product-container,
-    #search-results-container {
+    #search-results-container,
+    #products {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 10px !important;
         padding-bottom: 20px;
     }
 
-    /* 2. White Card Styling */
+    /* 2. DARK Card Styling (Reverted from White) */
     #product-container>div,
-    #search-results-container>div {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        /* slate-200 */
+    #search-results-container>div,
+    #products>div {
+        background: #121212 !important;
+        /* Dark Grey */
+        border: 1px solid #333 !important;
+        /* Subtle Border */
         border-radius: 12px !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: none !important;
         overflow: hidden;
     }
 
     /* 3. Image Styling (Square + Contain) */
     #product-container a.aspect-square,
-    #search-results-container a.aspect-square {
-        background: #ffffff !important;
-        padding: 12px !important;
-        /* Padding around image */
-        border-bottom: 1px solid #f3f4f6 !important;
+    #search-results-container a.aspect-square,
+    #products a.aspect-square {
+        background: #050505 !important;
+        /* Almost black */
+        padding: 8px !important;
+        border-bottom: 1px solid #222 !important;
     }
 
     #product-container img,
-    #search-results-container img {
+    #search-results-container img,
+    #products img {
         object-fit: contain !important;
         /* Ensure full visibility */
     }
 
     /* 4. Content Typography Adjustment */
     #product-container h3,
-    #search-results-container h3 {
-        color: #1a202c !important;
-        /* Dark text */
-        font-size: 0.8rem !important;
-        line-height: 1.25 !important;
-        margin-bottom: 4px !important;
+    #search-results-container h3,
+    #products h3 {
+        color: #ffffff !important;
+        /* White text */
+        font-size: 0.85rem !important;
+        /* Slightly larger for readability */
+        line-height: 1.2 !important;
+        margin-bottom: 6px !important;
+        height: 2.4em !important;
+        overflow: hidden !important;
     }
 
     #product-container .p-5,
-    #search-results-container .p-5 {
-        padding: 10px !important;
-        /* Reduce padding */
+    #search-results-container .p-5,
+    #products .p-5 {
+        padding: 12px !important;
+        /* Balanced padding */
     }
 
     #product-container .text-\[\#39ff14\],
-    #search-results-container .text-\[\#39ff14\] {
-        color: #10b981 !important;
-        /* Readable green on white */
-        text-shadow: none !important;
+    #search-results-container .text-\[\#39ff14\],
+    #products .text-\[\#39ff14\] {
+        color: #39ff14 !important;
+        /* Neon Green */
+        text-shadow: 0 0 5px rgba(57, 255, 20, 0.3) !important;
     }
+
+    /* Hide generic 'In Stock' labels if they clutter */
+    #product-container .text-gray-500,
+    #search-results-container .text-gray-500,
+    #products .text-gray-500 {
+        color: #888 !important;
+    }
+
 
     #product-container button,
     #search-results-container button {
