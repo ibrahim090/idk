@@ -317,9 +317,34 @@ body {
         width: 85% !important;
     }
 
-    /* 9. FORCE HIDE Desktop Nav Container on Mobile */
-    /* Targets the specific gray bar holding the text links */
-    header>div.border-t.border-gray-800 {
+    /* 10. UNIVERSAL MOBILE HEADER FIX */
+    /* Force 3-column layout: [Hamburger] [Logo] [Cart] */
+
+    body header .max-w-7xl,
+    body nav .max-w-7xl {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    body header .flex.items-center.justify-between,
+    body nav .flex.items-center.justify-between {
+        justify-content: space-between !important;
+        width: 100% !important;
+    }
+
+    /* Force Hamburger Visibility */
+    button[onclick="window.toggleMobileMenu()"] {
+        display: block !important;
+        /* Force show */
+        order: -1 !important;
+        /* Ensure it's first (Left) */
+        margin-right: 10px !important;
+        position: relative !important;
+        z-index: 60 !important;
+    }
+
+    /* Hide Desktop Nav explicitly on mobile */
+    #dynamic-nav {
         display: none !important;
     }
 }
