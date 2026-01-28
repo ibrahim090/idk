@@ -155,78 +155,13 @@ body {
 
     /* --- MOBILE REFACTOR OVERRIDES --- */
 
-    /* 1. View Toggles (Grid vs List) */
-
-    /* Default / Grid View */
-    #product-container.view-grid,
-    #search-results-container.view-grid,
-    #products section .grid {
+    /* 1. Force 2-Column Grid (Homepage & Categories) */
+    #product-container,
+    #search-results-container {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 10px !important;
         padding-bottom: 20px;
-    }
-
-    /* List View (Horizontal Cards) */
-    #product-container.view-list,
-    #search-results-container.view-list {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-        padding-bottom: 20px;
-    }
-
-    /* List Card Styling - Horizontal Layout */
-    .view-list>div {
-        display: flex !important;
-        flex-direction: row !important;
-        height: auto !important;
-        min-height: 120px;
-        align-items: stretch;
-    }
-
-    /* List Image (Left, Fixed 35%) */
-    .view-list>div>a:first-child {
-        width: 35% !important;
-        flex-shrink: 0 !important;
-        aspect-ratio: 1 / 1 !important;
-        border-bottom: none !important;
-        border-right: 1px solid #222 !important;
-    }
-
-    /* List Content (Right, 65%) */
-    .view-list>div>.p-5 {
-        width: 65% !important;
-        padding: 10px 12px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        text-align: left !important;
-    }
-
-    /* Adjust typography in List View */
-    .view-list h3 {
-        font-size: 0.9rem !important;
-        margin-bottom: 4px !important;
-        height: auto !important;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-    }
-
-    .view-list .text-\[\#39ff14\] {
-        font-size: 1rem !important;
-        /* Smaller price */
-    }
-
-    /* Move Button or Adjust */
-    .view-list button {
-        margin-top: 6px !important;
-        margin-left: 0 !important;
-        /* Align left */
-        transform: scale(1);
-        width: 100%;
-        padding: 6px 0 !important;
-        font-size: 0.7rem !important;
     }
 
     /* 1b. Category Page Grids */
