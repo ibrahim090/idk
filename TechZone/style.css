@@ -157,283 +157,259 @@ body {
 
     /* 1. View Toggles (Grid vs List) */
 
-    /* =========================================
-       COMPLETE REWRITE: Mobile Layout Switching
-       ========================================= */
-
-    /* CLASS A: Grid View (2 Columns) */
-    .product-grid-view {
+    /* Default / Grid View */
+    #product-container.view-grid,
+    #search-results-container.view-grid,
+    #products section .grid {
         display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: 1fr 1fr !important;
         gap: 10px !important;
-        width: 100% !important;
         padding-bottom: 20px;
     }
 
-    /* Grid View Card Logic */
-    .product-grid-view .product-card {
+    /* List View (Horizontal Cards) */
+    #product-container.view-list,
+    #search-results-container.view-list {
         display: flex !important;
         flex-direction: column !important;
-        width: 100% !important;
-        min-width: 0 !important;
-    }
-
-    /* CLASS B: List View (1 Column, Full Width) */
-    .product-list-view {
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100% !important;
-        gap: 15px !important;
+        gap: 12px !important;
         padding-bottom: 20px;
-        border-top: 1px solid #333;
     }
 
-    /* List View Card Logic (THE FIX) */
-    .product-list-view .product-card {
+    /* List Card Styling - Horizontal Layout */
+    .view-list>div {
         display: flex !important;
         flex-direction: row !important;
-        /* Side-by-Side */
-        width: 100% !important;
-        /* Fill the screen */
-        align-items: center !important;
-        border-bottom: 1px solid #333 !important;
-        padding: 10px 0 !important;
-        background: transparent !important;
-        border-radius: 0 !important;
+        height: auto !important;
+        min-height: 120px;
+        align-items: stretch;
     }
 
-    /* Image Container (Left) */
-    .product-list-view .product-card>a:first-child {
-        width: 100px !important;
-        min-width: 100px !important;
-        max-width: 100px !important;
-        height: 100px !important;
-        padding: 0 !important;
-        margin-right: 15px !important;
-        background: transparent !important;
-        border: none !important;
+    /* List Image (Left, Fixed 35%) */
+    .view-list>div>a:first-child {
+        width: 35% !important;
+        flex-shrink: 0 !important;
+        aspect-ratio: 1 / 1 !important;
+        border-bottom: none !important;
+        border-right: 1px solid #222 !important;
     }
 
-    .product-list-view .product-card img {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: contain !important;
-    }
-
-    /* Details Container (Right) */
-    .product-list-view .product-card .p-5,
-    .product-list-view .product-card .flex-1 {
-        flex: 1 !important;
-        padding: 0 !important;
+    /* List Content (Right, 65%) */
+    .view-list>div>.p-5 {
+        width: 65% !important;
+        padding: 10px 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
         text-align: left !important;
     }
 
-    .product-list-view h3 {
-        font-size: 0.95rem !important;
+    /* Adjust typography in List View */
+    .view-list h3 {
+        font-size: 0.9rem !important;
         margin-bottom: 4px !important;
         height: auto !important;
-        -webkit-line-clamp: 1 !important;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
     }
 
-    .product-list-view .text-\[\#39ff14\] {
-        font-size: 1.1rem !important;
-        margin-bottom: 0 !important;
+    .view-list .text-\[\#39ff14\] {
+        font-size: 1rem !important;
+        /* Smaller price */
     }
 
-    .product-list-view button {
+    /* Move Button or Adjust */
+    .view-list button {
+        margin-top: 6px !important;
+        margin-left: 0 !important;
+        /* Align left */
+        transform: scale(1);
+        width: 100%;
+        padding: 6px 0 !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* 1b. Category Page Grids */
+    #products section .grid,
+    #products .grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    /* 2. DARK Card Styling (Reverted from White) */
+    #product-container>div,
+    #search-results-container>div,
+    #products section .grid>div,
+    #products .grid>div {
+        background: #121212 !important;
+        /* Dark Grey */
+        border: 1px solid #333 !important;
+        /* Subtle Border */
+        border-radius: 12px !important;
+        box-shadow: none !important;
+        overflow: hidden;
+        width: 100% !important;
+    }
+
+    /* 3. Image Styling (Square + Contain) */
+    #product-container a.aspect-square,
+    #search-results-container a.aspect-square,
+    #products section .grid a.aspect-square,
+    #products .grid a.aspect-square {
+        background: #050505 !important;
+        /* Almost black */
+        padding: 8px !important;
+        border-bottom: 1px solid #222 !important;
+        width: 100% !important;
+        display: block !important;
+        aspect-ratio: 1 / 1 !important;
+    }
+
+    #product-container img,
+    #search-results-container img,
+    #products section .grid img,
+    #products .grid img {
+        object-fit: contain !important;
+        /* Ensure full visibility */
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* 4. Content Typography Adjustment */
+    #product-container h3,
+    #search-results-container h3,
+    #products section .grid h3,
+    #products .grid h3 {
+        color: #ffffff !important;
+        /* White text */
+        font-size: 0.85rem !important;
+        /* Slightly larger for readability */
+        line-height: 1.2 !important;
+        margin-bottom: 6px !important;
+        height: 2.4em !important;
+        overflow: hidden !important;
+    }
+
+    #product-container .p-5,
+    #search-results-container .p-5,
+    #products section .grid .p-5,
+    #products .grid .p-5 {
+        padding: 12px !important;
+        /* Balanced padding */
+    }
+
+    #product-container .text-\[\#39ff14\],
+    #search-results-container .text-\[\#39ff14\],
+    #products section .grid .text-\[\#39ff14\],
+    #products .grid .text-\[\#39ff14\] {
+        color: #39ff14 !important;
+        /* Neon Green */
+        text-shadow: 0 0 5px rgba(57, 255, 20, 0.3) !important;
+    }
+
+    /* Hide generic 'In Stock' labels if they clutter */
+    /* Hide generic 'In Stock' labels if they clutter */
+    #product-container .text-gray-500,
+    #search-results-container .text-gray-500,
+    #products section .grid .text-gray-500,
+    #products .grid .text-gray-500 {
+        color: #888 !important;
+    }
+
+
+    #product-container button,
+    #search-results-container button {
+        /* Adjust buttons */
+        transform: scale(0.9);
+        margin-left: auto;
+    }
+
+    /* 5. Banners & Carousel */
+    #hero-carousel {
+        margin: 0 16px 24px 16px !important;
         width: auto !important;
-        padding: 5px 15px !important;
-        margin-top: 8px !important;
-        font-size: 11px !important;
+        border-radius: 16px !important;
+        height: 220px !important;
+        border: none !important;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
     }
 
-    font-size: 11px !important;
-    margin-left: 0 !important;
-    align-self: flex-start !important;
-    border-radius: 4px !important;
-}
+    .carousel-content {
+        padding: 1.5rem !important;
+    }
 
-/* 1b. Category Page Grids */
-#products section .grid,
-#products .grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-    width: 100% !important;
-}
+    .carousel-content h1 {
+        font-size: 1.8rem !important;
+        margin-bottom: 1rem !important;
+    }
 
-/* 2. DARK Card Styling (Reverted from White) */
-#product-container>div,
-#search-results-container>div,
-#products section .grid>div,
-#products .grid>div {
-    background: #121212 !important;
-    /* Dark Grey */
-    border: 1px solid #333 !important;
-    /* Subtle Border */
-    border-radius: 12px !important;
-    box-shadow: none !important;
-    overflow: hidden;
-    width: 100% !important;
-}
+    .carousel-content a {
+        padding: 8px 16px !important;
+        font-size: 0.75rem !important;
+    }
 
-/* 3. Image Styling (Square + Contain) */
-#product-container a.aspect-square,
-#search-results-container a.aspect-square,
-#products section .grid a.aspect-square,
-#products .grid a.aspect-square {
-    background: #050505 !important;
-    /* Almost black */
-    padding: 8px !important;
-    border-bottom: 1px solid #222 !important;
-    width: 100% !important;
-    display: block !important;
-    aspect-ratio: 1 / 1 !important;
-}
+    /* 6. Fix Sticky Bottom Nav Padding */
+    body {
+        padding-bottom: 0px !important;
+        /* Reset padding since nav is gone */
+    }
 
-#product-container img,
-#search-results-container img,
-#products section .grid img,
-#products .grid img {
-    object-fit: contain !important;
-    /* Ensure full visibility */
-    width: 100% !important;
-    height: 100% !important;
-}
+    /* 7. FORCE REMOVE Sticky Bottom Nav */
+    #mobile-bottom-nav {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        pointer-events: none !important;
+    }
 
-/* 4. Content Typography Adjustment */
-#product-container h3,
-#search-results-container h3,
-#products section .grid h3,
-#products .grid h3 {
-    color: #ffffff !important;
-    /* White text */
-    font-size: 0.85rem !important;
-    /* Slightly larger for readability */
-    line-height: 1.2 !important;
-    margin-bottom: 6px !important;
-    height: 2.4em !important;
-    overflow: hidden !important;
-}
+    /* 8. Fix Drawer to be Full Height */
+    #mobile-drawer {
+        z-index: 9999 !important;
+    }
 
-#product-container .p-5,
-#search-results-container .p-5,
-#products section .grid .p-5,
-#products .grid .p-5 {
-    padding: 12px !important;
-    /* Balanced padding */
-}
+    #drawer-panel {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        z-index: 10000 !important;
+        /* Above backdrop */
+        max-width: 300px !important;
+        /* Reasonable width */
+        width: 85% !important;
+    }
 
-#product-container .text-\[\#39ff14\],
-#search-results-container .text-\[\#39ff14\],
-#products section .grid .text-\[\#39ff14\],
-#products .grid .text-\[\#39ff14\] {
-    color: #39ff14 !important;
-    /* Neon Green */
-    text-shadow: 0 0 5px rgba(57, 255, 20, 0.3) !important;
-}
+    /* 10. UNIVERSAL MOBILE HEADER FIX */
+    /* Force 3-column layout: [Hamburger] [Logo] [Cart] */
 
-/* Hide generic 'In Stock' labels if they clutter */
-/* Hide generic 'In Stock' labels if they clutter */
-#product-container .text-gray-500,
-#search-results-container .text-gray-500,
-#products section .grid .text-gray-500,
-#products .grid .text-gray-500 {
-    color: #888 !important;
-}
+    body header .max-w-7xl,
+    body nav .max-w-7xl {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
 
+    body header .flex.items-center.justify-between,
+    body nav .flex.items-center.justify-between {
+        justify-content: space-between !important;
+        width: 100% !important;
+    }
 
-#product-container button,
-#search-results-container button {
-    /* Adjust buttons */
-    transform: scale(0.9);
-    margin-left: auto;
-}
+    /* Force Hamburger Visibility */
+    button[onclick="window.toggleMobileMenu()"] {
+        display: block !important;
+        /* Force show */
+        order: -1 !important;
+        /* Ensure it's first (Left) */
+        margin-right: 10px !important;
+        position: relative !important;
+        z-index: 60 !important;
+    }
 
-/* 5. Banners & Carousel */
-#hero-carousel {
-    margin: 0 16px 24px 16px !important;
-    width: auto !important;
-    border-radius: 16px !important;
-    height: 220px !important;
-    border: none !important;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
-}
-
-.carousel-content {
-    padding: 1.5rem !important;
-}
-
-.carousel-content h1 {
-    font-size: 1.8rem !important;
-    margin-bottom: 1rem !important;
-}
-
-.carousel-content a {
-    padding: 8px 16px !important;
-    font-size: 0.75rem !important;
-}
-
-/* 6. Fix Sticky Bottom Nav Padding */
-body {
-    padding-bottom: 0px !important;
-    /* Reset padding since nav is gone */
-}
-
-/* 7. FORCE REMOVE Sticky Bottom Nav */
-#mobile-bottom-nav {
-    display: none !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    height: 0 !important;
-    pointer-events: none !important;
-}
-
-/* 8. Fix Drawer to be Full Height */
-#mobile-drawer {
-    z-index: 9999 !important;
-}
-
-#drawer-panel {
-    position: fixed !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    height: 100vh !important;
-    z-index: 10000 !important;
-    /* Above backdrop */
-    max-width: 300px !important;
-    /* Reasonable width */
-    width: 85% !important;
-}
-
-/* 10. UNIVERSAL MOBILE HEADER FIX */
-/* Force 3-column layout: [Hamburger] [Logo] [Cart] */
-
-body header .max-w-7xl,
-body nav .max-w-7xl {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-}
-
-body header .flex.items-center.justify-between,
-body nav .flex.items-center.justify-between {
-    justify-content: space-between !important;
-    width: 100% !important;
-}
-
-/* Force Hamburger Visibility */
-button[onclick="window.toggleMobileMenu()"] {
-    display: block !important;
-    /* Force show */
-    order: -1 !important;
-    /* Ensure it's first (Left) */
-    margin-right: 10px !important;
-    position: relative !important;
-    z-index: 60 !important;
-}
-
-/* Hide Desktop Nav explicitly on mobile */
-#dynamic-nav {
-    display: none !important;
-}
+    /* Hide Desktop Nav explicitly on mobile */
+    #dynamic-nav {
+        display: none !important;
+    }
 }

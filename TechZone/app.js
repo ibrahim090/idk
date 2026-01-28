@@ -1273,10 +1273,10 @@ function renderGrid(products, container) {
     container.innerHTML = products.map(product => {
         const isOutOfStock = (product.stock !== undefined && product.stock <= 0);
         return `
-        <div class="product-card group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
+        <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
             ${isOutOfStock ? `<div class="absolute top-6 left-[-45px] w-[170px] bg-[#39ff14] text-black text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-[#32cc11]">Not Available</div>` : ''}
             <a href="product.html?id=${product.id}" class="block relative aspect-square overflow-hidden bg-black cursor-pointer">
-                <img src="${product.image ? 'assets/products/' + product.image : (product.image_url || 'assets/default-product.png')}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
+                <img src="${product.image_url}" onerror="this.src='assets/default-product.png'" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
             </a>
             <div class="p-5 flex-1 flex flex-col">
                 <div class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-bold">${product.category || 'Hardware'}</div>
@@ -1292,7 +1292,7 @@ function renderGrid(products, container) {
                     
                     ${isOutOfStock ?
                 `<button disabled class="bg-gray-900 text-[#39ff14] font-bold py-2 px-3 rounded cursor-not-allowed uppercase text-[10px] border border-[#39ff14]/50 opacity-70">Sold Out</button>` :
-                `<button onclick="window.addToCartFromCard(this, '${product.id}', '${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.image ? 'assets/products/' + product.image : (product.image_url || 'assets/default-product.png')}', ${product.stock})" 
+                `<button onclick="window.addToCartFromCard(this, '${product.id}', '${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.image_url}', ${product.stock})" 
                             class="w-10 h-10 rounded-full bg-[#39ff14] text-black flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-[0_0_15px_rgba(57,255,20,0.4)]">
                             <i class="fas fa-cart-plus"></i>
                         </button>`
@@ -1402,14 +1402,11 @@ function loadDynamicSections(typeFilter, containerId) {
 window.changeMainImage = (src, thumbEl) => {
     const main = document.getElementById('main-product-image');
     if (main) {
-        if (!src) src = 'https://via.placeholder.com/500x500?text=No+Image'; // Safety Fallback
         main.src = src;
         // Update Active Thumb class
-        if (thumbEl && thumbEl.parentElement) {
-            const thumbs = thumbEl.parentElement.children;
-            for (let t of thumbs) t.classList.remove('border-[#39ff14]');
-            thumbEl.classList.add('border-[#39ff14]');
-        }
+        const thumbs = thumbEl.parentElement.children;
+        for (let t of thumbs) t.classList.remove('border-[#39ff14]');
+        thumbEl.classList.add('border-[#39ff14]');
     }
 };
 
@@ -1431,15 +1428,8 @@ function loadProductDetails() {
         }
 
         const p = doc.data();
-
-        const images = (p.images && p.images.length > 0) ? p.images : [p.image || p.image_url];
-        // Resolve First Image
-        let mainImg = images[0];
-        if (mainImg && !mainImg.startsWith('http') && !mainImg.startsWith('assets/')) {
-            mainImg = `assets/products/${mainImg}`;
-        } else if (!mainImg) {
-            mainImg = 'https://via.placeholder.com/500x500?text=No+Image';
-        }
+        const images = (p.images && p.images.length > 0) ? p.images : [p.image_url];
+        const mainImg = images[0];
         const stock = p.stock || 0;
         const isOutOfStock = stock === 0;
 
@@ -1464,14 +1454,14 @@ function loadProductDetails() {
                      <div class="flex flex-col gap-3 w-16 md:w-20 shrink-0">
                          ${images.map((img, i) => `
                              <div class="aspect-square rounded-lg border ${i === 0 ? 'border-[#39ff14]' : 'border-gray-800'} overflow-hidden cursor-pointer hover:border-[#39ff14] transition-all bg-black" 
-                                  onmouseover="window.changeMainImage('${img.startsWith('http') || img.startsWith('assets/') ? img : 'assets/products/' + img}', this)" onclick="window.changeMainImage('${img.startsWith('http') || img.startsWith('assets/') ? img : 'assets/products/' + img}', this)">
-                                 <img src="${img.startsWith('http') || img.startsWith('assets/') ? img : 'assets/products/' + img}" onerror="this.src='https://via.placeholder.com/150?text=No+Image'" class="w-full h-full object-cover">
+                                  onmouseover="window.changeMainImage('${img}', this)" onclick="window.changeMainImage('${img}', this)">
+                                 <img src="${img}" class="w-full h-full object-cover">
                              </div>
                          `).join('')}
                      </div>
                      <!-- Main Image -->
                      <div class="flex-1 bg-black rounded-xl border border-gray-800 p-2 relative group overflow-hidden flex items-center justify-center aspect-[4/5] md:aspect-square">
-                         <img id="main-product-image" src="${mainImg}" onerror="this.src='https://via.placeholder.com/500x500?text=No+Image'" class="w-full h-full object-contain max-h-[600px] rounded-lg transform transition-transform duration-500 hover:scale-105">
+                         <img id="main-product-image" src="${mainImg}" class="w-full h-full object-contain max-h-[600px] rounded-lg transform transition-transform duration-500 hover:scale-105">
                      </div>
                 </div>
 
@@ -1996,12 +1986,10 @@ window.renderSearchResults = function () {
 
     // Update View Layout Classes
     // We add 'view-list' or 'view-grid' for Mobile CSS targeting
-    // Toggle View Classes
     if (searchViewMode === 'list') {
-        container.className = "product-list-view mx-auto max-w-7xl px-4";
-        // Note: We remove grid classes to prevent conflicts
+        container.className = "flex flex-col gap-4 view-list";
     } else {
-        container.className = "product-grid-view grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 view-grid";
     }
 
     searchResults.forEach(prod => {
@@ -2009,13 +1997,13 @@ window.renderSearchResults = function () {
         const isList = searchViewMode === 'list';
 
         if (isList) {
-            // LIST ITEM - Added 'product-card' class
+            // LIST ITEM
             cardHTML = `
-                <div class="product-card bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-6 hover:border-[#39ff14] transition-all group">
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-6 hover:border-[#39ff14] transition-all group">
                     <a href="product.html?id=${prod.id}" class="w-48 h-32 flex-shrink-0 bg-black rounded-lg overflow-hidden">
                         <img src="${prod.image_url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${prod.name}">
                     </a>
-                    <div class="p-5 flex-1 flex flex-col justify-between">
+                    <div class="flex-1 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-start">
                                 <h3 class="text-xl font-bold text-white mb-1">
@@ -2030,7 +2018,7 @@ window.renderSearchResults = function () {
                             <p class="text-gray-400 text-sm line-clamp-2">${prod.description || 'No description available.'}</p>
                         </div>
                         <div class="flex items-center gap-4 mt-4">
-                             <button onclick="window.addToCartFromCard(this, '${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${prod.price}, '${prod.image_url}', ${prod.stock})" 
+                             <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
                                     class="bg-[#39ff14] text-black font-bold uppercase px-6 py-2 rounded hover:bg-white transition-colors text-sm">
                                 <i class="fas fa-cart-plus mr-2"></i> Add to Cart
                             </button>
