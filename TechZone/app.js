@@ -1985,10 +1985,11 @@ window.renderSearchResults = function () {
     });
 
     // Update View Layout Classes
+    // We add 'view-list' or 'view-grid' for Mobile CSS targeting
     if (searchViewMode === 'list') {
-        container.className = "flex flex-col gap-4"; // List Layout
+        container.className = "flex flex-col gap-4 view-list";
     } else {
-        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"; // Grid Layout
+        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 view-grid";
     }
 
     searchResults.forEach(prod => {
