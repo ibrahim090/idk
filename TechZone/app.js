@@ -3129,3 +3129,66 @@ window.renderGlobalFooter = () => {
 };
 
 document.addEventListener('DOMContentLoaded', renderGlobalFooter);
+
+/* ============================
+   ADMIN PANEL LOGIC
+   ============================ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Only run on admin page
+    const loginBtn = document.getElementById('login-btn');
+    if (!loginBtn) return;
+
+    const authSection = document.getElementById('auth-section');
+    const dashboardSection = document.getElementById('dashboard-section');
+    const pinInput = document.getElementById('pin-input');
+    const logoutBtn = document.getElementById('logout-btn');
+    const authError = document.getElementById('auth-error');
+
+    // Check Session
+    if (sessionStorage.getItem('techzone_admin_auth') === 'true') {
+        showDashboard();
+    }
+
+    // Login
+    loginBtn.addEventListener('click', () => {
+        const pin = pinInput.value.trim();
+        if (pin === '1234') {
+            sessionStorage.setItem('techzone_admin_auth', 'true');
+            showDashboard();
+        } else {
+            authError.textContent = "INVALID PIN";
+            authError.classList.remove('hidden');
+            pinInput.value = '';
+        }
+    });
+
+    // Also allow Enter key
+    if (pinInput) {
+        pinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+    }
+
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('techzone_admin_auth');
+            location.reload();
+        });
+    }
+
+    function showDashboard() {
+        if (authSection) authSection.classList.add('hidden');
+        if (dashboardSection) dashboardSection.classList.remove('hidden');
+        STATE.isAdmin = true;
+
+        // Load Admin Modules
+        if (typeof window.loadAdminOrders === 'function') window.loadAdminOrders();
+        if (typeof window.loadAdminNavigation === 'function') window.loadAdminNavigation();
+        if (typeof window.loadAdminCategories === 'function') window.loadAdminCategories();
+        if (typeof window.loadPageTypes === 'function') window.loadPageTypes();
+        if (typeof window.loadBanners === 'function') window.loadBanners();
+
+        console.log("Admin Dashboard Loaded");
+    }
+});
