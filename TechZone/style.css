@@ -157,14 +157,23 @@ body {
 
     /* 1. View Toggles (Grid vs List) */
 
-    /* Default / Grid View */
-    #product-container.view-grid,
-    #search-results-container.view-grid,
-    #products section .grid {
+    /* Default / Grid View - FORCE 2 COLUMNS */
+    #product-container,
+    #search-results-container,
+    #products section .grid,
+    #products .grid {
         display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
+        grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px !important;
         padding-bottom: 20px;
+    }
+
+    /* Force Product Card to shrinking */
+    .product-card {
+        min-width: 0 !important;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        /* Reset any flex lock */
     }
 
     /* List View (Horizontal Cards) */
@@ -213,20 +222,25 @@ body {
         line-clamp: 2;
     }
 
-    .view-list .text-\[\#39ff14\] {
+    .view-list .text-\[\#39ff14\],
+    .view-list .text-2xl {
         font-size: 1rem !important;
-        /* Smaller price */
+        background: transparent !important;
+        /* Ensure no bg */
+        text-shadow: none !important;
     }
 
     /* Move Button or Adjust */
+    /* Move Button or Adjust */
     .view-list button {
-        margin-top: 6px !important;
+        margin-top: auto !important;
+        /* Push to bottom if needed */
         margin-left: 0 !important;
-        /* Align left */
-        transform: scale(1);
-        width: 100%;
-        padding: 6px 0 !important;
-        font-size: 0.7rem !important;
+        width: auto !important;
+        /* Don't stretch */
+        padding: 5px 10px !important;
+        font-size: 12px !important;
+        align-self: flex-start !important;
     }
 
     /* 1b. Category Page Grids */
