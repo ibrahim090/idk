@@ -1996,10 +1996,12 @@ window.renderSearchResults = function () {
 
     // Update View Layout Classes
     // We add 'view-list' or 'view-grid' for Mobile CSS targeting
+    // Toggle View Classes
     if (searchViewMode === 'list') {
-        container.className = "flex flex-col gap-4 view-list";
+        container.className = "product-list-view mx-auto max-w-7xl px-4";
+        // Note: We remove grid classes to prevent conflicts
     } else {
-        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 view-grid";
+        container.className = "product-grid-view grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     }
 
     searchResults.forEach(prod => {
@@ -2007,13 +2009,13 @@ window.renderSearchResults = function () {
         const isList = searchViewMode === 'list';
 
         if (isList) {
-            // LIST ITEM
+            // LIST ITEM - Added 'product-card' class
             cardHTML = `
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-6 hover:border-[#39ff14] transition-all group">
+                <div class="product-card bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-6 hover:border-[#39ff14] transition-all group">
                     <a href="product.html?id=${prod.id}" class="w-48 h-32 flex-shrink-0 bg-black rounded-lg overflow-hidden">
                         <img src="${prod.image_url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${prod.name}">
                     </a>
-                    <div class="flex-1 flex flex-col justify-between">
+                    <div class="p-5 flex-1 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-start">
                                 <h3 class="text-xl font-bold text-white mb-1">
@@ -2028,7 +2030,7 @@ window.renderSearchResults = function () {
                             <p class="text-gray-400 text-sm line-clamp-2">${prod.description || 'No description available.'}</p>
                         </div>
                         <div class="flex items-center gap-4 mt-4">
-                             <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                             <button onclick="window.addToCartFromCard(this, '${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${prod.price}, '${prod.image_url}', ${prod.stock})" 
                                     class="bg-[#39ff14] text-black font-bold uppercase px-6 py-2 rounded hover:bg-white transition-colors text-sm">
                                 <i class="fas fa-cart-plus mr-2"></i> Add to Cart
                             </button>
