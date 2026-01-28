@@ -1130,19 +1130,19 @@ function initSearch() {
     const searchBtn = searchInput ? searchInput.parentElement.querySelector('button') : null;
 
     if (searchInput) {
-        searchInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                const query = e.target.value.toLowerCase().trim();
-                window.location.href = `index.html?search=${query}`; // Simple redirect search
-            }
-        });
-
-        if (searchBtn) {
-            searchBtn.onclick = () => {
-                const query = searchInput.value.toLowerCase().trim();
-                window.location.href = `index.html?search=${query}`;
-            };
-        }
+        // We allow the form with action="search.html" to handle the submission naturally.
+        // If we needed to force it via JS (e.g. for inputs outside forms), we would do:
+        /*
+        const doSearch = () => {
+             const query = searchInput.value.trim();
+             if(query) window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+        };
+        searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') doSearch(); });
+        if (searchBtn) searchBtn.onclick = doSearch;
+        */
+        // But since we have a proper <form action="search.html"> in the HTML, 
+        // we mostly just need to ensure we don't block it or redirect to index.html incorrectly.
+        // So we do nothing here and let the native form work.
     }
 }
 
