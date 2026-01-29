@@ -769,7 +769,7 @@ function updateCartUI() {
         total += item.price * item.qty;
         return `
         <div class="flex gap-4 bg-black/40 p-3 rounded-lg border border-gray-800">
-            <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded bg-gray-900">
+            <img src="${item.image}" onerror="this.src='assets/default-product.png'" alt="${item.name}" class="w-20 h-20 object-cover rounded bg-gray-900">
             <div class="flex-1 flex flex-col justify-between">
                 <div>
                     <h4 class="text-white font-bold text-sm line-clamp-2">${item.name}</h4>
@@ -889,7 +889,7 @@ function initCheckoutPage() {
         total += item.price * item.qty;
         return `
             <div class="flex gap-4 items-center">
-                <img src="${item.image}" class="w-12 h-12 object-cover rounded bg-gray-800">
+                <img src="${item.image}" onerror="this.src='assets/default-product.png'" class="w-12 h-12 object-cover rounded bg-gray-800">
                 <div class="flex-1">
                     <h4 class="text-white text-sm font-bold line-clamp-1">${item.name}</h4>
                     <p class="text-xs text-gray-500">${item.qty} x $${item.price}</p>
@@ -1276,7 +1276,7 @@ function renderGrid(products, container) {
         <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
             ${isOutOfStock ? `<div class="absolute top-6 left-[-45px] w-[170px] bg-[#39ff14] text-black text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-[#32cc11]">Not Available</div>` : ''}
             <a href="product.html?id=${product.id}" class="block relative aspect-square overflow-hidden bg-black cursor-pointer">
-                <img src="assets/products/${product.image}" onerror="this.src='assets/default-product.png'" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
+                <img src="${product.image_url || 'assets/products/' + product.image}" onerror="this.src='assets/default-product.png'" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
             </a>
             <div class="p-5 flex-1 flex flex-col">
                 <div class="text-xs text-gray-500 mb-1 uppercase tracking-wider font-bold">${product.category || 'Hardware'}</div>
@@ -1428,8 +1428,8 @@ function loadProductDetails() {
         }
 
         const p = doc.data();
-        const images = (p.images && p.images.length > 0) ? p.images : [p.image_url];
-        const mainImg = images[0];
+        const images = (p.images && p.images.length > 0) ? p.images : [p.image_url || ('assets/products/' + p.image)];
+        const mainImg = images[0] || 'assets/default-product.png';
         const stock = p.stock || 0;
         const isOutOfStock = stock === 0;
 
@@ -1604,14 +1604,14 @@ function loadRelatedProducts(currentId) {
             const card = `
                 <div class="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col snap-start group hover:border-[#39ff14] transition-all">
                     <a href="product.html?id=${prod.id}" class="block overflow-hidden rounded-lg mb-4 relative aspect-square">
-                        <img src="assets/products/${prod.image}" onerror="this.src='assets/default-product.png'" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="${prod.image_url || 'assets/products/' + prod.image}" onerror="this.src='assets/default-product.png'" alt="${prod.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </a>
                     <div class="flex-1 flex flex-col">
                         <h4 class="text-white font-bold mb-1 truncate">${prod.name}</h4>
                         <p class="text-xs text-gray-500 uppercase tracking-widest mb-3">${prod.category}</p>
                         <div class="mt-auto flex items-center justify-between">
                             <span class="text-[#39ff14] font-black text-lg">$${prod.price}</span>
-                            <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                            <button onclick="window.addToCartFromCard(this, '${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${prod.price}, '${prod.image_url}', ${prod.stock})" 
                                     class="bg-gray-800 hover:bg-[#39ff14] hover:text-black text-white w-8 h-8 rounded flex items-center justify-center transition-colors">
                                 <i class="fas fa-cart-plus"></i>
                             </button>
@@ -1994,13 +1994,26 @@ window.renderSearchResults = function () {
     searchResults.forEach(prod => {
         let cardHTML = '';
         const isList = searchViewMode === 'list';
+        const isOutOfStock = (prod.stock !== undefined && prod.stock <= 0);
+
+        // Define Variables missed in original code
+        const ribbon = isOutOfStock ? `<div class="absolute top-6 left-[-45px] w-[170px] bg-[#39ff14] text-black text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-[#32cc11]">Not Available</div>` : '';
+        const priceDisplay = isOutOfStock ?
+            `<span class="text-[#39ff14]/70 font-bold uppercase text-xs">Out of Stock</span>` :
+            `<span class="text-2xl font-black text-white italic">$${prod.price}</span>`;
+        const btnHtml = isOutOfStock ?
+            `<button disabled class="bg-gray-900 text-[#39ff14] font-bold py-2 px-3 rounded cursor-not-allowed uppercase text-[10px] border border-[#39ff14]/50 opacity-70">Sold Out</button>` :
+            `<button onclick="window.addToCartFromCard(this, '${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${prod.price}, '${prod.image_url}', ${prod.stock})" 
+                    class="w-10 h-10 rounded-full bg-[#39ff14] text-black flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-[0_0_15px_rgba(57,255,20,0.4)]">
+                    <i class="fas fa-cart-plus"></i>
+                </button>`;
 
         if (isList) {
             // LIST ITEM
             cardHTML = `
                 <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-6 hover:border-[#39ff14] transition-all group">
                     <a href="product.html?id=${prod.id}" class="w-48 h-32 flex-shrink-0 bg-black rounded-lg overflow-hidden">
-                        <img src="assets/products/${prod.image}" onerror="this.src='assets/default-product.png'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${prod.name}">
+                        <img src="${prod.image_url || 'assets/products/' + prod.image}" onerror="this.src='assets/default-product.png'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${prod.name}">
                     </a>
                     <div class="flex-1 flex flex-col justify-between">
                         <div>
@@ -2017,7 +2030,7 @@ window.renderSearchResults = function () {
                             <p class="text-gray-400 text-sm line-clamp-2">${prod.description || 'No description available.'}</p>
                         </div>
                         <div class="flex items-center gap-4 mt-4">
-                             <button onclick="window.addToCartFromCard('${prod.id}', '${prod.name}', ${prod.price}, '${prod.image_url}', this)" 
+                             <button onclick="window.addToCartFromCard(this, '${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${prod.price}, '${prod.image_url}', ${prod.stock})" 
                                     class="bg-[#39ff14] text-black font-bold uppercase px-6 py-2 rounded hover:bg-white transition-colors text-sm">
                                 <i class="fas fa-cart-plus mr-2"></i> Add to Cart
                             </button>
@@ -2035,7 +2048,7 @@ window.renderSearchResults = function () {
                     ${ribbon}
                     <a href="product.html?id=${prod.id}" class="block h-48 overflow-hidden relative">
                          <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-                        <img src="assets/products/${prod.image}" onerror="this.src='assets/default-product.png'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}" alt="${prod.name}">
+                        <img src="${prod.image_url || 'assets/products/' + prod.image}" onerror="this.src='assets/default-product.png'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}" alt="${prod.name}">
                     </a>
                     <div class="p-5">
                         <h3 class="text-white font-bold text-lg mb-2 truncate group-hover:text-[#39ff14] transition-colors">
