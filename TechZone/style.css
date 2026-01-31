@@ -359,8 +359,8 @@ body {
 .product-list-view {
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
-    /* Tighter gap */
+    gap: 6px !important;
+    /* Even tighter gap (8px -> 6px) */
     grid-template-columns: 1fr !important;
     width: 100% !important;
 }
@@ -374,13 +374,14 @@ body {
     flex-direction: row !important;
     width: 100% !important;
     align-items: center !important;
-    border-bottom: 1px solid #222;
-    /* More subtle border */
+    border-bottom: 1px solid #1a1a1a;
     padding: 0 !important;
     margin: 0 !important;
     height: auto !important;
-    min-height: 80px !important;
-    /* Reduced min height */
+    min-height: 64px !important;
+    /* Reduced min height (80px -> 64px) */
+    background: #000;
+    /* Ensure solid background */
 }
 
 /* Fix Image Size in List View - Boosted Specificity */
@@ -388,9 +389,9 @@ body {
 #product-container.product-list-view>div img,
 .product-list-view .product-card img,
 .product-list-view>div img {
-    width: 80px !important;
-    /* Smaller Image */
-    height: 80px !important;
+    width: 60px !important;
+    /* Smaller Image (80px -> 60px) */
+    height: 60px !important;
     /* Smaller Height */
     object-fit: contain !important;
     flex-shrink: 0 !important;
@@ -404,8 +405,8 @@ body {
 .product-list-view>div .p-5 {
     width: auto !important;
     flex-grow: 1 !important;
-    padding: 8px 12px !important;
-    /* Tighter padding */
+    padding: 4px 10px !important;
+    /* Minimal padding */
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
@@ -416,12 +417,12 @@ body {
 #product-container.product-list-view>div h3,
 .product-list-view .product-card h3,
 .product-list-view>div h3 {
-    font-size: 14px !important;
-    /* Slightly smaller text */
+    font-size: 13px !important;
+    /* Smaller font (14px -> 13px) */
     margin-bottom: 2px !important;
     white-space: normal !important;
     height: auto !important;
-    line-height: 1.2 !important;
+    line-height: normal !important;
 }
 
 /* Hide clutter */
@@ -433,9 +434,11 @@ body {
 /* Ensure Button is visible */
 .product-list-view button,
 .product-list-view>div button {
-    margin-top: 4px !important;
-    transform: scale(0.9) !important;
-    /* Smaller button */
+    margin-top: 2px !important;
+    transform: scale(0.85) !important;
+    /* Even smaller button */
     transform-origin: left !important;
     margin-left: 0 !important;
+    padding: 4px 12px !important;
+    /* Force slimmer button */
 }
