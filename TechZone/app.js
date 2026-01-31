@@ -3144,6 +3144,7 @@ window.renderGlobalFooter = () => {
                 <ul class="space-y-3 text-gray-500 text-sm">
                     <li><a href="index.html" class="hover:text-[#39ff14] transition-colors">Home</a></li>
                     <li><a href="search.html?view=all" class="hover:text-[#39ff14] transition-colors">Products</a></li>
+                    <li><a href="admin.html" class="hover:text-[#39ff14] transition-colors">Admin</a></li>
                 </ul>
             </div>
 
