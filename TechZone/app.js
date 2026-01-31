@@ -1273,7 +1273,7 @@ function renderGrid(products, container) {
     container.innerHTML = products.map(product => {
         const isOutOfStock = (product.stock !== undefined && product.stock <= 0);
         return `
-        <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
+        <div class="product-card group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-[#39ff14] transition-all hover:shadow-[0_0_30px_rgba(57,255,20,0.1)] flex flex-col relative">
             ${isOutOfStock ? `<div class="absolute top-6 left-[-45px] w-[170px] bg-[#39ff14] text-black text-[10px] font-bold uppercase -rotate-45 z-20 shadow-lg text-center py-1 tracking-wider border-y border-[#32cc11]">Not Available</div>` : ''}
             <a href="product.html?id=${product.id}" class="block relative aspect-square overflow-hidden bg-black cursor-pointer">
                 <img src="${product.image_url || 'assets/products/' + product.image}" onerror="this.src='assets/default-product.png'" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}">
@@ -2044,7 +2044,7 @@ window.renderSearchResults = function () {
         } else {
             // GRID CARD
             cardHTML = `
-                <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-[#39ff14] transition-all group relative">
+                <div class="product-card bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-[#39ff14] transition-all group relative">
                     ${ribbon}
                     <a href="product.html?id=${prod.id}" class="block h-48 overflow-hidden relative">
                          <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
@@ -2069,27 +2069,59 @@ window.renderSearchResults = function () {
     });
 };
 
-window.applySearchSort = function () {
+function applySearchSort() {
     renderSearchResults();
-};
+}
 
-window.setView = function (mode) {
-    searchViewMode = mode;
+function setView(mode) {
+    const isMobile = window.innerWidth <= 768;
+    const container = document.getElementById('search-results-container');
+    const gridBtn = document.getElementById('view-grid');
+    const listBtn = document.getElementById('view-list');
 
-    // Update Button Styles
-    const btnGrid = document.getElementById('view-grid');
-    const btnList = document.getElementById('view-list');
+    if (isMobile) {
+        // Mobile Logic: Toggle CSS Class Only (Do Not Re-Render HTML Logic)
+        if (!container) return;
 
-    if (mode === 'grid') {
-        if (btnGrid) btnGrid.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
-        if (btnList) btnList.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
+        // Ensure we are in "Grid HTML" mode for CSS transformation to work
+        if (searchViewMode !== 'grid') {
+            searchViewMode = 'grid';
+            renderSearchResults();
+        }
+
+        if (mode === 'list') {
+            container.classList.add('product-list-view');
+            container.classList.remove('product-grid-view');
+
+            // Update Buttons (Visual feedback)
+            if (gridBtn) gridBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
+            if (listBtn) listBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
+        } else {
+            container.classList.add('product-grid-view');
+            container.classList.remove('product-list-view');
+
+            // Update Buttons
+            if (gridBtn) gridBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
+            if (listBtn) listBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
+        }
+
     } else {
-        if (btnList) btnList.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
-        if (btnGrid) btnGrid.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
-    }
+        // Desktop Logic: Standard Re-Render
+        searchViewMode = mode;
+        if (container) container.classList.remove('product-list-view', 'product-grid-view'); // Clean up
 
-    renderSearchResults();
-};
+        // Update Buttons
+        if (mode === 'grid') {
+            if (gridBtn) gridBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
+            if (listBtn) listBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
+        } else {
+            if (gridBtn) gridBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
+            if (listBtn) listBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
+        }
+
+        renderSearchResults();
+    }
+}
 
 // Auto-run on search page
 if (window.location.pathname.includes('search.html')) {
