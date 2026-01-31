@@ -353,60 +353,69 @@ body {
    MOBILE LIST/GRID VIEW LOGIC (ISOLATED)
    ========================================= */
 
-/* GLOBAL: If JS adds this class, it MUST be a list, regardless of screen size */
+/* GLOBAL STRONG OVERRIDE via ID Specificity */
+#search-results-container.product-list-view,
+#product-container.product-list-view,
 .product-list-view {
     display: flex !important;
     flex-direction: column !important;
     gap: 15px !important;
     grid-template-columns: 1fr !important;
-    /* Override Force */
     width: 100% !important;
 }
 
-/* Transform Card to Row ONLY in List View */
+/* Transform Card to Row ONLY in List View - Boosted Specificity */
+#search-results-container.product-list-view>div,
+#product-container.product-list-view>div,
 .product-list-view .product-card,
 .product-list-view>div {
-    /* Robust selector */
     display: flex !important;
     flex-direction: row !important;
-    /* Horizontal Layout */
     width: 100% !important;
     align-items: center !important;
     border-bottom: 1px solid #333;
     padding: 0 !important;
     margin: 0 !important;
     height: auto !important;
+    min-height: 120px !important;
+    /* Ensure min height */
 }
 
-/* Fix Image Size in List View */
+/* Fix Image Size in List View - Boosted Specificity */
+#search-results-container.product-list-view>div img,
+#product-container.product-list-view>div img,
 .product-list-view .product-card img,
 .product-list-view>div img {
     width: 120px !important;
     height: 120px !important;
     object-fit: contain !important;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
     background: #000;
 }
 
-/* Fix Content Width in List View */
+/* Fix Content Width in List View - Boosted Specificity */
+#search-results-container.product-list-view>div .p-5,
+#product-container.product-list-view>div .p-5,
 .product-list-view .product-card .p-5,
 .product-list-view>div .p-5 {
     width: auto !important;
     flex-grow: 1 !important;
     padding: 10px 15px !important;
-    /* More padding */
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
 }
 
-/* Adjust text sizes */
+/* Adjust text sizes - Boosted Specificity */
+#search-results-container.product-list-view>div h3,
+#product-container.product-list-view>div h3,
 .product-list-view .product-card h3,
 .product-list-view>div h3 {
     font-size: 16px !important;
     margin-bottom: 4px !important;
     white-space: normal !important;
-    /* Allow wrap */
+    height: auto !important;
+    /* Override fixed height from mobile rules */
 }
 
 /* Hide clutter */
@@ -415,15 +424,10 @@ body {
     display: none !important;
 }
 
-/* Ensure Button is visible and accessible */
+/* Ensure Button is visible */
 .product-list-view button,
 .product-list-view>div button {
     margin-top: 8px !important;
     transform: scale(1) !important;
     margin-left: 0 !important;
-}
-
-/* DESKTOP PROTECTION: Only relevant if JS accidently triggers it */
-@media (min-width: 1024px) {
-    /* If needed, we can reset here, but JS controls the class */
 }
