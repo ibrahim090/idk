@@ -348,101 +348,82 @@ body {
         display: none !important;
     }
 }
+
 /* =========================================
    MOBILE LIST/GRID VIEW LOGIC (ISOLATED)
    ========================================= */
 
-@media (max-width: 768px) {
-    /* FORCE GRID VIEW (Default or Active) */
-    .product-grid-view, .product-grid-view .product-card {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        width: 100% !important;
-        flex-direction: column !important;
-    }
-
-    /* FORCE LIST VIEW (The Fix) */
-    .product-list-view {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 15px !important;
-    }
-    
-    /* Transform Card to Row ONLY in List View */
-    .product-list-view .product-card {
-        display: flex !important;
-        flex-direction: row !important; /* Horizontal Layout */
-        width: 100% !important;
-        align-items: center !important;
-        border-bottom: 1px solid #333;
-    }
-    
-    /* Fix Image Size in List View */
-    .product-list-view .product-card img {
-        width: 100px !important;
-        height: 100px !important;
-        object-fit: contain;
-        flex-shrink: 0; /* Prevent shrinking */
-    }
-    
-    /* Fix Content Width in List View */
-    .product-list-view .product-card .p-5 {
-        width: auto !important;
-        flex-grow: 1;
-        padding-left: 10px;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-    }
-
-    /* Adjust text sizes in list view to fit */
-    .product-list-view .product-card h3 {
-        font-size: 14px !important;
-        margin-bottom: 4px !important;
-    }
-    
-    /* Hide some elements in list view if crowded */
-    .product-list-view .product-card .text-gray-500.text-xs.mb-4.line-clamp-2 {
-         display: none !important;
-    }
+/* GLOBAL: If JS adds this class, it MUST be a list, regardless of screen size */
+.product-list-view {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    grid-template-columns: 1fr !important;
+    /* Override Force */
+    width: 100% !important;
 }
 
-/* DESKTOP PROTECTION */
-@media (min-width: 769px) {
-    /* Ensure these classes do NOTHING on desktop */
-    .product-list-view, .product-grid-view {
-        /* No styles here, fall back to default desktop grid */
-    }
+/* Transform Card to Row ONLY in List View */
+.product-list-view .product-card,
+.product-list-view>div {
+    /* Robust selector */
+    display: flex !important;
+    flex-direction: row !important;
+    /* Horizontal Layout */
+    width: 100% !important;
+    align-items: center !important;
+    border-bottom: 1px solid #333;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
 }
 
-
-/* Robustness: Target direct children in case product-card class is missing */
-@media (max-width: 768px) {
-    .product-list-view > div {
-        display: flex !important;
-        flex-direction: row !important;
-        width: 100% !important;
-        align-items: center !important;
-        border-bottom: 1px solid #333;
-    }
-    .product-list-view > div img {
-        width: 100px !important;
-        height: 100px !important;
-        object-fit: contain;
-        flex-shrink: 0; 
-    }
-    .product-list-view > div .p-5 {
-        width: auto !important;
-        flex-grow: 1;
-        padding-left: 10px;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-    }
-    .product-list-view > div h3 {
-        font-size: 14px !important;
-        margin-bottom: 4px !important;
-    }
-    .product-list-view > div .text-gray-500.text-xs.mb-4.line-clamp-2 {
-         display: none !important;
-    }
+/* Fix Image Size in List View */
+.product-list-view .product-card img,
+.product-list-view>div img {
+    width: 120px !important;
+    height: 120px !important;
+    object-fit: contain !important;
+    flex-shrink: 0;
+    background: #000;
 }
 
+/* Fix Content Width in List View */
+.product-list-view .product-card .p-5,
+.product-list-view>div .p-5 {
+    width: auto !important;
+    flex-grow: 1 !important;
+    padding: 10px 15px !important;
+    /* More padding */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+/* Adjust text sizes */
+.product-list-view .product-card h3,
+.product-list-view>div h3 {
+    font-size: 16px !important;
+    margin-bottom: 4px !important;
+    white-space: normal !important;
+    /* Allow wrap */
+}
+
+/* Hide clutter */
+.product-list-view .product-card .text-gray-500.text-xs.mb-4.line-clamp-2,
+.product-list-view>div .text-gray-500.text-xs.mb-4.line-clamp-2 {
+    display: none !important;
+}
+
+/* Ensure Button is visible and accessible */
+.product-list-view button,
+.product-list-view>div button {
+    margin-top: 8px !important;
+    transform: scale(1) !important;
+    margin-left: 0 !important;
+}
+
+/* DESKTOP PROTECTION: Only relevant if JS accidently triggers it */
+@media (min-width: 1024px) {
+    /* If needed, we can reset here, but JS controls the class */
+}
