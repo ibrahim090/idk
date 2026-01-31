@@ -359,7 +359,8 @@ body {
 .product-list-view {
     display: flex !important;
     flex-direction: column !important;
-    gap: 15px !important;
+    gap: 8px !important;
+    /* Tighter gap */
     grid-template-columns: 1fr !important;
     width: 100% !important;
 }
@@ -373,12 +374,13 @@ body {
     flex-direction: row !important;
     width: 100% !important;
     align-items: center !important;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #222;
+    /* More subtle border */
     padding: 0 !important;
     margin: 0 !important;
     height: auto !important;
-    min-height: 120px !important;
-    /* Ensure min height */
+    min-height: 80px !important;
+    /* Reduced min height */
 }
 
 /* Fix Image Size in List View - Boosted Specificity */
@@ -386,8 +388,10 @@ body {
 #product-container.product-list-view>div img,
 .product-list-view .product-card img,
 .product-list-view>div img {
-    width: 120px !important;
-    height: 120px !important;
+    width: 80px !important;
+    /* Smaller Image */
+    height: 80px !important;
+    /* Smaller Height */
     object-fit: contain !important;
     flex-shrink: 0 !important;
     background: #000;
@@ -400,7 +404,8 @@ body {
 .product-list-view>div .p-5 {
     width: auto !important;
     flex-grow: 1 !important;
-    padding: 10px 15px !important;
+    padding: 8px 12px !important;
+    /* Tighter padding */
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
@@ -411,11 +416,12 @@ body {
 #product-container.product-list-view>div h3,
 .product-list-view .product-card h3,
 .product-list-view>div h3 {
-    font-size: 16px !important;
-    margin-bottom: 4px !important;
+    font-size: 14px !important;
+    /* Slightly smaller text */
+    margin-bottom: 2px !important;
     white-space: normal !important;
     height: auto !important;
-    /* Override fixed height from mobile rules */
+    line-height: 1.2 !important;
 }
 
 /* Hide clutter */
@@ -427,7 +433,9 @@ body {
 /* Ensure Button is visible */
 .product-list-view button,
 .product-list-view>div button {
-    margin-top: 8px !important;
-    transform: scale(1) !important;
+    margin-top: 4px !important;
+    transform: scale(0.9) !important;
+    /* Smaller button */
+    transform-origin: left !important;
     margin-left: 0 !important;
 }
