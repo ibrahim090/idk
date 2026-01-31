@@ -414,3 +414,35 @@ body {
     }
 }
 
+
+/* Robustness: Target direct children in case product-card class is missing */
+@media (max-width: 768px) {
+    .product-list-view > div {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        align-items: center !important;
+        border-bottom: 1px solid #333;
+    }
+    .product-list-view > div img {
+        width: 100px !important;
+        height: 100px !important;
+        object-fit: contain;
+        flex-shrink: 0; 
+    }
+    .product-list-view > div .p-5 {
+        width: auto !important;
+        flex-grow: 1;
+        padding-left: 10px;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+    .product-list-view > div h3 {
+        font-size: 14px !important;
+        margin-bottom: 4px !important;
+    }
+    .product-list-view > div .text-gray-500.text-xs.mb-4.line-clamp-2 {
+         display: none !important;
+    }
+}
+

@@ -2092,6 +2092,7 @@ function setView(mode) {
         if (mode === 'list') {
             container.classList.add('product-list-view');
             container.classList.remove('product-grid-view');
+            container.classList.remove('grid'); // Remove Tailwind Grid
 
             // Update Buttons (Visual feedback)
             if (gridBtn) gridBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-gray-400 border border-transparent";
@@ -2099,6 +2100,7 @@ function setView(mode) {
         } else {
             container.classList.add('product-grid-view');
             container.classList.remove('product-list-view');
+            container.classList.add('grid'); // Restore Tailwind Grid
 
             // Update Buttons
             if (gridBtn) gridBtn.className = "flex-1 py-2 bg-gray-800 hover:bg-gray-700 rounded text-center transition-colors text-[#39ff14] border border-[#39ff14]/30";
@@ -3144,7 +3146,6 @@ window.renderGlobalFooter = () => {
                 <ul class="space-y-3 text-gray-500 text-sm">
                     <li><a href="index.html" class="hover:text-[#39ff14] transition-colors">Home</a></li>
                     <li><a href="search.html?view=all" class="hover:text-[#39ff14] transition-colors">Products</a></li>
-                    <li><a href="admin.html" class="hover:text-[#39ff14] transition-colors">Admin</a></li>
                 </ul>
             </div>
 
